@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useData } from '@/context/DataContext';
 import { Servico } from '@/types';
 import { PageHeader } from '@/components/common/PageHeader';
-import { DataTable } from '@/components/common/DataTable';
+import { DataTable, Column } from '@/components/common/DataTable';
 import { DeleteConfirmationDialog } from '@/components/common/DeleteConfirmationDialog';
 import {
   Dialog,

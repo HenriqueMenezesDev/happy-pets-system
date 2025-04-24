@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { useData } from '@/context/DataContext';
 import { Cliente } from '@/types';
 import { PageHeader } from '@/components/common/PageHeader';
-import { DataTable } from '@/components/common/DataTable';
+import { DataTable, Column } from '@/components/common/DataTable';
 import { DeleteConfirmationDialog } from '@/components/common/DeleteConfirmationDialog';
 import {
   Dialog,
@@ -27,7 +28,7 @@ interface FormValues {
 }
 
 const Clientes = () => {
-  const { clientes, adicionarCliente, atualizarCliente, removerCliente } = useData();
+  const { clientes, adicionarCliente, atualizarCliente, removerCliente, loading } = useData();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentCliente, setCurrentCliente] = useState<Cliente | null>(null);
@@ -35,10 +36,10 @@ const Clientes = () => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>();
 
   const columns: Column<Cliente>[] = [
-    { header: 'Nome', accessor: 'nome' as keyof Cliente },
-    { header: 'Email', accessor: 'email' as keyof Cliente },
-    { header: 'Telefone', accessor: 'telefone' as keyof Cliente },
-    { header: 'CPF', accessor: 'cpf' as keyof Cliente },
+    { header: 'Nome', accessor: 'nome'},
+    { header: 'Email', accessor: 'email' },
+    { header: 'Telefone', accessor: 'telefone' },
+    { header: 'CPF', accessor: 'cpf' },
   ];
 
   const handleAddNew = () => {
@@ -103,7 +104,7 @@ const Clientes = () => {
         keyExtractor={(cliente) => cliente.id}
         emptyStateProps={{
           title: "Nenhum cliente cadastrado",
-          description: "Cadastre seu primeiro cliente para começar",
+          description: loading ? "Carregando..." : "Cadastre seu primeiro cliente para começar",
           actionLabel: "Cadastrar Cliente",
           onAction: handleAddNew
         }}

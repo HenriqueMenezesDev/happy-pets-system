@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useData } from '@/context/DataContext';
 import { Pet } from '@/types';
 import { PageHeader } from '@/components/common/PageHeader';
-import { DataTable } from '@/components/common/DataTable';
+import { DataTable, Column } from '@/components/common/DataTable';
 import { DeleteConfirmationDialog } from '@/components/common/DeleteConfirmationDialog';
 import {
   Dialog,
@@ -44,10 +44,10 @@ const Pets = () => {
   const { register, handleSubmit, control, reset, formState: { errors } } = useForm<FormValues>();
 
   const columns: Column<Pet>[] = [
-    { header: 'Nome', accessor: 'nome' as keyof Pet },
-    { header: 'Espécie', accessor: 'especie' as keyof Pet },
-    { header: 'Raça', accessor: 'raca' as keyof Pet },
-    { header: 'Dono', accessor: 'clienteNome' as keyof Pet },
+    { header: 'Nome', accessor: 'nome' },
+    { header: 'Espécie', accessor: 'especie' },
+    { header: 'Raça', accessor: 'raca' },
+    { header: 'Dono', accessor: 'clienteNome' },
     { 
       header: 'Sexo', 
       accessor: (pet: Pet) => pet.sexo === 'M' ? 'Macho' : 'Fêmea' 

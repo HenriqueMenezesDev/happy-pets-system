@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Edit, Search, Trash2 } from 'lucide-react';
 import { EmptyState } from './EmptyState';
 
-interface Column<T> {
+export interface Column<T> {
   header: string;
   accessor: keyof T | ((item: T) => React.ReactNode);
   className?: string;
