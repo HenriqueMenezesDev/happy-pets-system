@@ -3,6 +3,44 @@ import { supabase } from '@/integrations/supabase/client';
 import { Cliente, Pet, Funcionario, Servico, Produto, Atendimento, ItemAtendimento } from '@/types';
 import { toast } from '@/hooks/use-toast';
 
+// Helper functions to map between database and frontend models
+const mapDbClienteToCliente = (dbCliente: any): Cliente => {
+  return {
+    id: dbCliente.id,
+    nome: dbCliente.nome,
+    email: dbCliente.email,
+    telefone: dbCliente.telefone,
+    endereco: dbCliente.endereco,
+    cpf: dbCliente.cpf,
+    dataCadastro: dbCliente.data_cadastro
+  };
+};
+
+const mapDbPetToPet = (dbPet: any): Pet => {
+  return {
+    id: dbPet.id,
+    nome: dbPet.nome,
+    especie: dbPet.especie,
+    raca: dbPet.raca,
+    dataNascimento: dbPet.data_nascimento,
+    peso: dbPet.peso,
+    sexo: dbPet.sexo as 'M' | 'F',
+    clienteId: dbPet.cliente_id,
+    clienteNome: dbPet.clientes?.nome || dbPet.clienteNome
+  };
+};
+
+const mapDbFuncionarioToFuncionario = (dbFuncionario: any): Funcionario => {
+  return {
+    id: dbFuncionario.id,
+    nome: dbFuncionario.nome,
+    cargo: dbFuncionario.cargo,
+    email: dbFuncionario.email,
+    telefone: dbFuncionario.telefone,
+    dataCadastro: dbFuncionario.data_cadastro
+  };
+};
+
 // Cliente services
 export async function fetchClientes() {
   try {
@@ -12,7 +50,7 @@ export async function fetchClientes() {
       .order('nome');
 
     if (error) throw error;
-    return data as Cliente[];
+    return data.map(mapDbClienteToCliente) as Cliente[];
   } catch (error: any) {
     console.error('Erro ao buscar clientes:', error.message);
     toast({
@@ -39,7 +77,7 @@ export async function addCliente(cliente: Omit<Cliente, 'id' | 'dataCadastro'>) 
       .single();
 
     if (error) throw error;
-    return data as Cliente;
+    return mapDbClienteToCliente(data);
   } catch (error: any) {
     console.error('Erro ao adicionar cliente:', error.message);
     toast({
@@ -61,7 +99,7 @@ export async function updateCliente(id: string, cliente: Partial<Cliente>) {
       .single();
 
     if (error) throw error;
-    return data as Cliente;
+    return mapDbClienteToCliente(data);
   } catch (error: any) {
     console.error('Erro ao atualizar cliente:', error.message);
     toast({
@@ -107,12 +145,7 @@ export async function fetchPets() {
     if (error) throw error;
     
     // Format pets with cliente nome
-    const petsWithClienteNome = data.map(pet => ({
-      ...pet,
-      clienteNome: pet.clientes?.nome
-    }));
-    
-    return petsWithClienteNome as Pet[];
+    return data.map(mapDbPetToPet) as Pet[];
   } catch (error: any) {
     console.error('Erro ao buscar pets:', error.message);
     toast({
@@ -141,7 +174,7 @@ export async function addPet(pet: Omit<Pet, 'id'>) {
       .single();
 
     if (error) throw error;
-    return data as Pet;
+    return mapDbPetToPet(data);
   } catch (error: any) {
     console.error('Erro ao adicionar pet:', error.message);
     toast({
@@ -173,7 +206,7 @@ export async function updatePet(id: string, pet: Partial<Pet>) {
       .single();
 
     if (error) throw error;
-    return data as Pet;
+    return mapDbPetToPet(data);
   } catch (error: any) {
     console.error('Erro ao atualizar pet:', error.message);
     toast({
@@ -216,7 +249,7 @@ export async function fetchFuncionarios() {
       .order('nome');
 
     if (error) throw error;
-    return data as Funcionario[];
+    return data.map(mapDbFuncionarioToFuncionario) as Funcionario[];
   } catch (error: any) {
     console.error('Erro ao buscar funcionários:', error.message);
     toast({
@@ -236,7 +269,13 @@ export async function fetchServicos() {
       .order('nome');
 
     if (error) throw error;
-    return data as Servico[];
+    return data.map(dbServico => ({
+      id: dbServico.id,
+      nome: dbServico.nome,
+      descricao: dbServico.descricao,
+      duracao: dbServico.duracao,
+      preco: dbServico.preco
+    })) as Servico[];
   } catch (error: any) {
     console.error('Erro ao buscar serviços:', error.message);
     toast({
@@ -256,7 +295,14 @@ export async function fetchProdutos() {
       .order('nome');
 
     if (error) throw error;
-    return data as Produto[];
+    return data.map(dbProduto => ({
+      id: dbProduto.id,
+      nome: dbProduto.nome,
+      descricao: dbProduto.descricao,
+      preco: dbProduto.preco,
+      estoque: dbProduto.estoque,
+      categoria: dbProduto.categoria
+    })) as Produto[];
   } catch (error: any) {
     console.error('Erro ao buscar produtos:', error.message);
     toast({

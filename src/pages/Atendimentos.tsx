@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { useData } from '@/context/DataContext';
 import { Atendimento, ItemAtendimento } from '@/types';
 import { PageHeader } from '@/components/common/PageHeader';
-import { DataTable } from '@/components/common/DataTable';
+import { DataTable, Column } from '@/components/common/DataTable';
 import { DeleteConfirmationDialog } from '@/components/common/DeleteConfirmationDialog';
 import {
   Dialog,
@@ -91,7 +90,7 @@ const Atendimentos = () => {
   const selectedClienteId = watch('clienteId');
   const selectedItemTipo = watchItem('tipo');
 
-  const columns = [
+  const columns: Column<Atendimento>[] = [
     { 
       header: 'Data', 
       accessor: (atendimento: Atendimento) => {
@@ -99,9 +98,9 @@ const Atendimentos = () => {
         return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
       }
     },
-    { header: 'Cliente', accessor: 'clienteNome' },
-    { header: 'Pet', accessor: 'petNome' },
-    { header: 'Funcionário', accessor: 'funcionarioNome' },
+    { header: 'Cliente', accessor: 'clienteNome' as keyof Atendimento },
+    { header: 'Pet', accessor: 'petNome' as keyof Atendimento },
+    { header: 'Funcionário', accessor: 'funcionarioNome' as keyof Atendimento },
     { 
       header: 'Status', 
       accessor: (atendimento: Atendimento) => (
@@ -497,7 +496,6 @@ const Atendimentos = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog para adicionar itens */}
       <Dialog open={isItemDialogOpen} onOpenChange={setIsItemDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -536,7 +534,7 @@ const Atendimentos = () => {
                   render={({ field }) => (
                     <Select onValueChange={field.onChange} value={field.value}>
                       <SelectTrigger>
-                        <SelectValue placeholder={`Selecione o ${selectedItemTipo === 'servico' ? 'serviço' : 'produto'}`} />
+                        <SelectValue placeholder={`Selecione o ${selectedItemTipo === 'serviço' ? 'serviço' : 'produto'}`} />
                       </SelectTrigger>
                       <SelectContent>
                         {selectedItemTipo === 'servico' 
