@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useData } from '@/context/DataContext';
 import { Produto } from '@/types';
@@ -36,22 +35,22 @@ const Produtos = () => {
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>();
 
-  const columns = [
-    { header: 'Nome', accessor: 'nome' },
+  const columns: Column<Produto>[] = [
+    { header: 'Nome', accessor: 'nome' as keyof Produto },
     { 
       header: 'Descrição', 
       accessor: (produto: Produto) => (
         <div className="max-w-xs truncate" title={produto.descricao}>
           {produto.descricao}
         </div>
-      ) 
+      )
     },
     { 
       header: 'Preço', 
       accessor: (produto: Produto) => `R$ ${produto.preco.toFixed(2)}` 
     },
-    { header: 'Estoque', accessor: 'estoque' },
-    { header: 'Categoria', accessor: 'categoria' },
+    { header: 'Estoque', accessor: 'estoque' as keyof Produto },
+    { header: 'Categoria', accessor: 'categoria' as keyof Produto },
   ];
 
   const handleAddNew = () => {

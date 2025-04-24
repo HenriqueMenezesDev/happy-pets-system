@@ -19,7 +19,7 @@ interface Column<T> {
   className?: string;
 }
 
-interface DataTableProps<T> {
+interface DataTableProps<T extends Record<string, any>> {
   columns: Column<T>[];
   data: T[];
   onEdit?: (item: T) => void;
@@ -34,7 +34,7 @@ interface DataTableProps<T> {
   };
 }
 
-export function DataTable<T>({
+export function DataTable<T extends Record<string, any>>({
   columns,
   data,
   onEdit,
@@ -49,7 +49,7 @@ export function DataTable<T>({
     if (!searchQuery) return data;
     
     return data.filter(item => {
-      return Object.entries(item).some(([key, value]) => {
+      return Object.entries(item).some(([_, value]) => {
         if (typeof value === 'string') {
           return value.toLowerCase().includes(searchQuery.toLowerCase());
         }
@@ -61,7 +61,7 @@ export function DataTable<T>({
     });
   }, [data, searchQuery]);
 
-  const renderCellContent = (item: T, accessor: keyof T | ((item: T) => React.ReactNode)) => {
+  const renderCellContent = (item: T, accessor: Column<T>['accessor']) => {
     if (typeof accessor === 'function') {
       return accessor(item);
     }

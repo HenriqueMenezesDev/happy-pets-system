@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useData } from '@/context/DataContext';
 import { Servico } from '@/types';
@@ -35,15 +34,15 @@ const Servicos = () => {
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>();
 
-  const columns = [
-    { header: 'Nome', accessor: 'nome' },
+  const columns: Column<Servico>[] = [
+    { header: 'Nome', accessor: 'nome' as keyof Servico },
     { 
       header: 'Descrição', 
       accessor: (servico: Servico) => (
         <div className="max-w-xs truncate" title={servico.descricao}>
           {servico.descricao}
         </div>
-      ) 
+      )
     },
     { 
       header: 'Duração', 

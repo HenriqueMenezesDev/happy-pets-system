@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useData } from '@/context/DataContext';
 import { Cliente } from '@/types';
@@ -35,11 +34,11 @@ const Clientes = () => {
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>();
 
-  const columns = [
-    { header: 'Nome', accessor: 'nome' },
-    { header: 'Email', accessor: 'email' },
-    { header: 'Telefone', accessor: 'telefone' },
-    { header: 'CPF', accessor: 'cpf' },
+  const columns: Column<Cliente>[] = [
+    { header: 'Nome', accessor: 'nome' as keyof Cliente },
+    { header: 'Email', accessor: 'email' as keyof Cliente },
+    { header: 'Telefone', accessor: 'telefone' as keyof Cliente },
+    { header: 'CPF', accessor: 'cpf' as keyof Cliente },
   ];
 
   const handleAddNew = () => {

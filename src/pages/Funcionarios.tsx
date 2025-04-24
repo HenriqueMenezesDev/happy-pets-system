@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useData } from '@/context/DataContext';
 import { Funcionario } from '@/types';
@@ -34,11 +33,11 @@ const Funcionarios = () => {
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>();
 
-  const columns = [
-    { header: 'Nome', accessor: 'nome' },
-    { header: 'Cargo', accessor: 'cargo' },
-    { header: 'Email', accessor: 'email' },
-    { header: 'Telefone', accessor: 'telefone' },
+  const columns: Column<Funcionario>[] = [
+    { header: 'Nome', accessor: 'nome' as keyof Funcionario },
+    { header: 'Cargo', accessor: 'cargo' as keyof Funcionario },
+    { header: 'Email', accessor: 'email' as keyof Funcionario },
+    { header: 'Telefone', accessor: 'telefone' as keyof Funcionario },
     { 
       header: 'Data de Cadastro', 
       accessor: (funcionario: Funcionario) => new Date(funcionario.dataCadastro).toLocaleDateString() 

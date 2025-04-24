@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useData } from '@/context/DataContext';
 import { Pet } from '@/types';
@@ -44,14 +43,11 @@ const Pets = () => {
 
   const { register, handleSubmit, control, reset, formState: { errors } } = useForm<FormValues>();
 
-  const columns = [
-    { header: 'Nome', accessor: 'nome' },
-    { header: 'Espécie', accessor: 'especie' },
-    { header: 'Raça', accessor: 'raca' },
-    { 
-      header: 'Dono', 
-      accessor: 'clienteNome',
-    },
+  const columns: Column<Pet>[] = [
+    { header: 'Nome', accessor: 'nome' as keyof Pet },
+    { header: 'Espécie', accessor: 'especie' as keyof Pet },
+    { header: 'Raça', accessor: 'raca' as keyof Pet },
+    { header: 'Dono', accessor: 'clienteNome' as keyof Pet },
     { 
       header: 'Sexo', 
       accessor: (pet: Pet) => pet.sexo === 'M' ? 'Macho' : 'Fêmea' 
