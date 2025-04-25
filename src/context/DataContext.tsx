@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { 
   Cliente, 
   Pet, 
@@ -22,56 +22,53 @@ interface DataContextType {
   atendimentos: Atendimento[];
 
   // Operações CRUD para Clientes
-  adicionarCliente: (cliente: Omit<Cliente, 'id' | 'dataCadastro'>) => void;
-  atualizarCliente: (id: string, cliente: Partial<Cliente>) => void;
-  removerCliente: (id: string) => void;
+  adicionarCliente: (cliente: Omit<Cliente, 'id' | 'dataCadastro'>) => Promise<Cliente | null>;
+  atualizarCliente: (id: string, cliente: Partial<Cliente>) => Promise<Cliente | null>;
+  removerCliente: (id: string) => Promise<boolean>;
   getClienteById: (id: string) => Cliente | undefined;
 
   // Operações CRUD para Pets
-  adicionarPet: (pet: Omit<Pet, 'id'>) => void;
-  atualizarPet: (id: string, pet: Partial<Pet>) => void;
-  removerPet: (id: string) => void;
+  adicionarPet: (pet: Omit<Pet, 'id' | 'clienteNome'>) => Promise<Pet | null>;
+  atualizarPet: (id: string, pet: Partial<Pet>) => Promise<Pet | null>;
+  removerPet: (id: string) => Promise<boolean>;
   getPetById: (id: string) => Pet | undefined;
   getPetsByClienteId: (clienteId: string) => Pet[];
 
   // Operações CRUD para Funcionários
-  adicionarFuncionario: (funcionario: Omit<Funcionario, 'id' | 'dataCadastro'>) => void;
-  atualizarFuncionario: (id: string, funcionario: Partial<Funcionario>) => void;
-  removerFuncionario: (id: string) => void;
+  adicionarFuncionario: (funcionario: Omit<Funcionario, 'id' | 'dataCadastro'>) => Promise<Funcionario | null>;
+  atualizarFuncionario: (id: string, funcionario: Partial<Funcionario>) => Promise<Funcionario | null>;
+  removerFuncionario: (id: string) => Promise<boolean>;
   getFuncionarioById: (id: string) => Funcionario | undefined;
 
   // Operações CRUD para Serviços
-  adicionarServico: (servico: Omit<Servico, 'id'>) => void;
-  atualizarServico: (id: string, servico: Partial<Servico>) => void;
-  removerServico: (id: string) => void;
+  adicionarServico: (servico: Omit<Servico, 'id'>) => Promise<Servico | null>;
+  atualizarServico: (id: string, servico: Partial<Servico>) => Promise<Servico | null>;
+  removerServico: (id: string) => Promise<boolean>;
   getServicoById: (id: string) => Servico | undefined;
 
   // Operações CRUD para Produtos
-  adicionarProduto: (produto: Omit<Produto, 'id'>) => void;
-  atualizarProduto: (id: string, produto: Partial<Produto>) => void;
-  removerProduto: (id: string) => void;
+  adicionarProduto: (produto: Omit<Produto, 'id'>) => Promise<Produto | null>;
+  atualizarProduto: (id: string, produto: Partial<Produto>) => Promise<Produto | null>;
+  removerProduto: (id: string) => Promise<boolean>;
   getProdutoById: (id: string) => Produto | undefined;
 
   // Operações CRUD para Atendimentos
-  adicionarAtendimento: (atendimento: Omit<Atendimento, 'id' | 'valorTotal'>) => void;
-  atualizarAtendimento: (id: string, atendimento: Partial<Atendimento>) => void;
-  removerAtendimento: (id: string) => void;
+  adicionarAtendimento: (atendimento: Omit<Atendimento, 'id' | 'valorTotal' | 'itens'>) => Promise<Atendimento | null>;
+  atualizarAtendimento: (id: string, atendimento: Partial<Atendimento>) => Promise<Atendimento | null>;
+  removerAtendimento: (id: string) => Promise<boolean>;
   getAtendimentoById: (id: string) => Atendimento | undefined;
 
   // Operações para itens de atendimento
-  adicionarItemAtendimento: (atendimentoId: string, item: Omit<ItemAtendimento, 'id'>) => void;
-  removerItemAtendimento: (atendimentoId: string, itemId: string) => void;
+  adicionarItemAtendimento: (atendimentoId: string, item: Omit<ItemAtendimento, 'id' | 'nome'>) => Promise<ItemAtendimento | null>;
+  removerItemAtendimento: (atendimentoId: string, itemId: string) => Promise<boolean>;
   
   // Utilitários
   calcularValorTotalAtendimento: (itens: ItemAtendimento[]) => number;
   
   // Estado da interface
   loading: boolean;
-  refreshData: () => void;
+  refreshData: () => Promise<void>;
 }
-
-// Função para gerar IDs únicos
-const generateId = () => Math.random().toString(36).substring(2, 9);
 
 // Criar o contexto
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -88,7 +85,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   // Função para carregar todos os dados
-  const fetchAllData = async () => {
+  const fetchAllData = useCallback(async () => {
     setLoading(true);
     try {
       const [
@@ -96,13 +93,15 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         petsData, 
         funcionariosData, 
         servicosData, 
-        produtosData
+        produtosData,
+        atendimentosData
       ] = await Promise.all([
         supabaseService.fetchClientes(),
         supabaseService.fetchPets(),
         supabaseService.fetchFuncionarios(),
         supabaseService.fetchServicos(),
-        supabaseService.fetchProdutos()
+        supabaseService.fetchProdutos(),
+        supabaseService.fetchAtendimentos()
       ]);
       
       setClientes(clientesData);
@@ -110,8 +109,30 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       setFuncionarios(funcionariosData);
       setServicos(servicosData);
       setProdutos(produtosData);
-      // Atendimentos serão implementados mais tarde
       
+      // Para cada atendimento, buscar os itens
+      const atendimentosComItens = await Promise.all(
+        atendimentosData.map(async (atendimento) => {
+          const itens = await supabaseService.fetchItensAtendimento(atendimento.id);
+          
+          // Adicionar nome a cada item
+          const itensComNome = itens.map(item => {
+            let nome = '';
+            if (item.tipo === 'produto') {
+              const produto = produtosData.find(p => p.id === item.itemId);
+              nome = produto?.nome || '';
+            } else {
+              const servico = servicosData.find(s => s.id === item.itemId);
+              nome = servico?.nome || '';
+            }
+            return { ...item, nome };
+          });
+          
+          return { ...atendimento, itens: itensComNome };
+        })
+      );
+      
+      setAtendimentos(atendimentosComItens);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
       toast({
@@ -122,12 +143,12 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
   
   // Carregar dados ao iniciar
   useEffect(() => {
     fetchAllData();
-  }, []);
+  }, [fetchAllData]);
 
   // Função utilitária para calcular o valor total
   const calcularValorTotalAtendimento = (itens: ItemAtendimento[]): number => {
@@ -145,6 +166,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         description: `${novoCliente.nome} foi adicionado com sucesso!`
       });
     }
+    return novoCliente;
   };
 
   const atualizarCliente = async (id: string, clienteData: Partial<Cliente>) => {
@@ -158,6 +180,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       );
       toast({ title: "Cliente atualizado com sucesso!" });
     }
+    return clienteAtualizado;
   };
 
   const removerCliente = async (id: string) => {
@@ -169,7 +192,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         description: "Este cliente possui pets cadastrados. Remova os pets primeiro.",
         variant: "destructive"
       });
-      return;
+      return false;
     }
 
     // Verificar se o cliente tem atendimentos
@@ -180,7 +203,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         description: "Este cliente possui atendimentos registrados.",
         variant: "destructive"
       });
-      return;
+      return false;
     }
 
     const success = await supabaseService.deleteCliente(id);
@@ -189,6 +212,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       setClientes(prevClientes => prevClientes.filter(cliente => cliente.id !== id));
       toast({ title: "Cliente removido com sucesso!" });
     }
+    return success;
   };
 
   const getClienteById = (id: string) => {
@@ -196,7 +220,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // CRUD para Pets
-  const adicionarPet = async (petData: Omit<Pet, 'id'>) => {
+  const adicionarPet = async (petData: Omit<Pet, 'id' | 'clienteNome'>) => {
     const cliente = getClienteById(petData.clienteId);
     if (!cliente) {
       toast({
@@ -204,7 +228,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         description: "Cliente não encontrado.",
         variant: "destructive"
       });
-      return;
+      return null;
     }
 
     const novoPet = await supabaseService.addPet(petData);
@@ -218,7 +242,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       
       setPets(prevPets => [...prevPets, petComNomeCliente]);
       toast({ title: "Pet adicionado com sucesso!" });
+      return petComNomeCliente;
     }
+    return null;
   };
 
   const atualizarPet = async (id: string, petData: Partial<Pet>) => {
@@ -241,7 +267,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         )
       );
       toast({ title: "Pet atualizado com sucesso!" });
+      return petComNomeCliente;
     }
+    return null;
   };
 
   const removerPet = async (id: string) => {
@@ -253,7 +281,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         description: "Este pet possui atendimentos registrados.",
         variant: "destructive"
       });
-      return;
+      return false;
     }
 
     const success = await supabaseService.deletePet(id);
@@ -262,6 +290,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       setPets(prevPets => prevPets.filter(pet => pet.id !== id));
       toast({ title: "Pet removido com sucesso!" });
     }
+    return success;
   };
 
   const getPetById = (id: string) => {
@@ -272,62 +301,103 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     return pets.filter(pet => pet.clienteId === clienteId);
   };
 
-  // Para não deixar o arquivo muito grande, vamos implementar as funções restantes de modo simplificado
-  // Quando você precisar implementar completamente outras entidades, podemos expandir estas funções
-  
-  // CRUD para Funcionários (simplificado por ora)
-  const adicionarFuncionario = (funcionarioData: Omit<Funcionario, 'id' | 'dataCadastro'>) => {
-    const novoFuncionario: Funcionario = {
-      ...funcionarioData,
-      id: generateId(),
-      dataCadastro: new Date().toISOString()
-    };
-    setFuncionarios([...funcionarios, novoFuncionario]);
-    toast({ title: "Funcionário adicionado com sucesso!" });
+  // CRUD para Funcionários
+  const adicionarFuncionario = async (funcionarioData: Omit<Funcionario, 'id' | 'dataCadastro'>) => {
+    const novoFuncionario = await supabaseService.addFuncionario(funcionarioData);
+    
+    if (novoFuncionario) {
+      setFuncionarios(prevFuncionarios => [...prevFuncionarios, novoFuncionario]);
+      toast({ title: "Funcionário adicionado com sucesso!" });
+    }
+    return novoFuncionario;
   };
 
-  const atualizarFuncionario = (id: string, funcionarioData: Partial<Funcionario>) => {
-    setFuncionarios(funcionariosAnteriores =>
-      funcionariosAnteriores.map(funcionario =>
-        funcionario.id === id ? { ...funcionario, ...funcionarioData } : funcionario
-      )
-    );
-    toast({ title: "Funcionário atualizado com sucesso!" });
+  const atualizarFuncionario = async (id: string, funcionarioData: Partial<Funcionario>) => {
+    const funcionarioAtualizado = await supabaseService.updateFuncionario(id, funcionarioData);
+    
+    if (funcionarioAtualizado) {
+      setFuncionarios(prevFuncionarios =>
+        prevFuncionarios.map(funcionario =>
+          funcionario.id === id ? funcionarioAtualizado : funcionario
+        )
+      );
+      toast({ title: "Funcionário atualizado com sucesso!" });
+    }
+    return funcionarioAtualizado;
   };
 
-  const removerFuncionario = (id: string) => {
-    setFuncionarios(funcionariosAnteriores => funcionariosAnteriores.filter(funcionario => funcionario.id !== id));
-    toast({ title: "Funcionário removido com sucesso!" });
+  const removerFuncionario = async (id: string) => {
+    // Verificar se o funcionário tem atendimentos
+    const funcionarioAtendimentos = atendimentos.filter(a => a.funcionarioId === id);
+    if (funcionarioAtendimentos.length > 0) {
+      toast({
+        title: "Erro ao remover funcionário",
+        description: "Este funcionário possui atendimentos registrados.",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    const success = await supabaseService.deleteFuncionario(id);
+    
+    if (success) {
+      setFuncionarios(prevFuncionarios => prevFuncionarios.filter(funcionario => funcionario.id !== id));
+      toast({ title: "Funcionário removido com sucesso!" });
+    }
+    return success;
   };
 
   const getFuncionarioById = (id: string) => {
     return funcionarios.find(funcionario => funcionario.id === id);
   };
 
-  // As outras funções CRUD seguem o mesmo padrão (implementação simplificada)
-  
   // CRUD para Serviços
-  const adicionarServico = (servicoData: Omit<Servico, 'id'>) => {
-    const novoServico: Servico = {
-      ...servicoData,
-      id: generateId()
-    };
-    setServicos([...servicos, novoServico]);
-    toast({ title: "Serviço adicionado com sucesso!" });
+  const adicionarServico = async (servicoData: Omit<Servico, 'id'>) => {
+    const novoServico = await supabaseService.addServico(servicoData);
+    
+    if (novoServico) {
+      setServicos(prevServicos => [...prevServicos, novoServico]);
+      toast({ title: "Serviço adicionado com sucesso!" });
+    }
+    return novoServico;
   };
 
-  const atualizarServico = (id: string, servicoData: Partial<Servico>) => {
-    setServicos(servicosAnteriores =>
-      servicosAnteriores.map(servico =>
-        servico.id === id ? { ...servico, ...servicoData } : servico
-      )
+  const atualizarServico = async (id: string, servicoData: Partial<Servico>) => {
+    const servicoAtualizado = await supabaseService.updateServico(id, servicoData);
+    
+    if (servicoAtualizado) {
+      setServicos(prevServicos =>
+        prevServicos.map(servico =>
+          servico.id === id ? servicoAtualizado : servico
+        )
+      );
+      toast({ title: "Serviço atualizado com sucesso!" });
+    }
+    return servicoAtualizado;
+  };
+
+  const removerServico = async (id: string) => {
+    // Verificar se o serviço está associado a algum atendimento
+    const servicoEmUso = atendimentos.some(atendimento =>
+      atendimento.itens.some(item => item.tipo === 'servico' && item.itemId === id)
     );
-    toast({ title: "Serviço atualizado com sucesso!" });
-  };
-
-  const removerServico = (id: string) => {
-    setServicos(servicosAnteriores => servicosAnteriores.filter(servico => servico.id !== id));
-    toast({ title: "Serviço removido com sucesso!" });
+    
+    if (servicoEmUso) {
+      toast({
+        title: "Erro ao remover serviço",
+        description: "Este serviço está associado a um ou mais atendimentos.",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    const success = await supabaseService.deleteServico(id);
+    
+    if (success) {
+      setServicos(prevServicos => prevServicos.filter(servico => servico.id !== id));
+      toast({ title: "Serviço removido com sucesso!" });
+    }
+    return success;
   };
 
   const getServicoById = (id: string) => {
@@ -335,65 +405,106 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // CRUD para Produtos
-  const adicionarProduto = (produtoData: Omit<Produto, 'id'>) => {
-    const novoProduto: Produto = {
-      ...produtoData,
-      id: generateId()
-    };
-    setProdutos([...produtos, novoProduto]);
-    toast({ title: "Produto adicionado com sucesso!" });
+  const adicionarProduto = async (produtoData: Omit<Produto, 'id'>) => {
+    const novoProduto = await supabaseService.addProduto(produtoData);
+    
+    if (novoProduto) {
+      setProdutos(prevProdutos => [...prevProdutos, novoProduto]);
+      toast({ title: "Produto adicionado com sucesso!" });
+    }
+    return novoProduto;
   };
 
-  const atualizarProduto = (id: string, produtoData: Partial<Produto>) => {
-    setProdutos(produtosAnteriores =>
-      produtosAnteriores.map(produto =>
-        produto.id === id ? { ...produto, ...produtoData } : produto
-      )
+  const atualizarProduto = async (id: string, produtoData: Partial<Produto>) => {
+    const produtoAtualizado = await supabaseService.updateProduto(id, produtoData);
+    
+    if (produtoAtualizado) {
+      setProdutos(prevProdutos =>
+        prevProdutos.map(produto =>
+          produto.id === id ? produtoAtualizado : produto
+        )
+      );
+      toast({ title: "Produto atualizado com sucesso!" });
+    }
+    return produtoAtualizado;
+  };
+
+  const removerProduto = async (id: string) => {
+    // Verificar se o produto está associado a algum atendimento
+    const produtoEmUso = atendimentos.some(atendimento =>
+      atendimento.itens.some(item => item.tipo === 'produto' && item.itemId === id)
     );
-    toast({ title: "Produto atualizado com sucesso!" });
-  };
-
-  const removerProduto = (id: string) => {
-    setProdutos(produtosAnteriores => produtosAnteriores.filter(produto => produto.id !== id));
-    toast({ title: "Produto removido com sucesso!" });
+    
+    if (produtoEmUso) {
+      toast({
+        title: "Erro ao remover produto",
+        description: "Este produto está associado a um ou mais atendimentos.",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    const success = await supabaseService.deleteProduto(id);
+    
+    if (success) {
+      setProdutos(prevProdutos => prevProdutos.filter(produto => produto.id !== id));
+      toast({ title: "Produto removido com sucesso!" });
+    }
+    return success;
   };
 
   const getProdutoById = (id: string) => {
     return produtos.find(produto => produto.id === id);
   };
 
-  // CRUD para Atendimentos (simplificado)
-  const adicionarAtendimento = (atendimentoData: Omit<Atendimento, 'id' | 'valorTotal'>) => {
-    const valorTotal = calcularValorTotalAtendimento(atendimentoData.itens);
+  // CRUD para Atendimentos
+  const adicionarAtendimento = async (atendimentoData: Omit<Atendimento, 'id' | 'valorTotal' | 'itens'>) => {
+    const novoAtendimento = await supabaseService.addAtendimento(atendimentoData);
     
-    const novoAtendimento: Atendimento = {
-      ...atendimentoData,
-      id: generateId(),
-      valorTotal
-    };
-    
-    setAtendimentos([...atendimentos, novoAtendimento]);
-    toast({ title: "Atendimento registrado com sucesso!" });
-  };
-
-  const atualizarAtendimento = (id: string, atendimentoData: Partial<Atendimento>) => {
-    let atendimentoAtualizado = { ...atendimentos.find(a => a.id === id), ...atendimentoData } as Atendimento;
-    
-    if (atendimentoData.itens) {
-      atendimentoAtualizado.valorTotal = calcularValorTotalAtendimento(atendimentoData.itens);
+    if (novoAtendimento) {
+      // Adicionar nomes para exibição
+      const clienteNome = getClienteById(atendimentoData.clienteId)?.nome || '';
+      const petNome = getPetById(atendimentoData.petId)?.nome || '';
+      const funcionarioNome = getFuncionarioById(atendimentoData.funcionarioId)?.nome || '';
+      
+      const atendimentoCompleto = {
+        ...novoAtendimento,
+        clienteNome,
+        petNome,
+        funcionarioNome,
+        itens: []
+      };
+      
+      setAtendimentos(prev => [atendimentoCompleto, ...prev]);
+      toast({ title: "Atendimento registrado com sucesso!" });
+      return atendimentoCompleto;
     }
-
-    setAtendimentos(atendimentosAnteriores =>
-      atendimentosAnteriores.map(atendimento =>
-        atendimento.id === id ? atendimentoAtualizado : atendimento
-      )
-    );
-    toast({ title: "Atendimento atualizado com sucesso!" });
+    return null;
   };
 
-  const removerAtendimento = (id: string) => {
-    setAtendimentos(atendimentosAnteriores => atendimentosAnteriores.filter(atendimento => atendimento.id !== id));
-    toast({ title: "Atendimento removido com sucesso!" });
+  const atualizarAtendimento = async (id: string, atendimentoData: Partial<Atendimento>) => {
+    const atendimentoAtualizado = await supabaseService.updateAtendimento(id, atendimentoData);
+    
+    if (atendimentoAtualizado) {
+      setAtendimentos(prev =>
+        prev.map(atendimento =>
+          atendimento.id === id ? atendimentoAtualizado : atendimento
+        )
+      );
+      toast({ title: "Atendimento atualizado com sucesso!" });
+      return atendimentoAtualizado;
+    }
+    return null;
+  };
+
+  const removerAtendimento = async (id: string) => {
+    const success = await supabaseService.deleteAtendimento(id);
+    
+    if (success) {
+      setAtendimentos(prev => prev.filter(atendimento => atendimento.id !== id));
+      toast({ title: "Atendimento removido com sucesso!" });
+    }
+    return success;
   };
 
   const getAtendimentoById = (id: string) => {
@@ -401,57 +512,26 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Operações para itens de atendimento
-  const adicionarItemAtendimento = (atendimentoId: string, itemData: Omit<ItemAtendimento, 'id'>) => {
-    const atendimento = getAtendimentoById(atendimentoId);
-    if (!atendimento) {
-      toast({
-        title: "Erro ao adicionar item",
-        description: "Atendimento não encontrado.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const novoItem: ItemAtendimento = {
-      ...itemData,
-      id: generateId()
-    };
-
-    const novosItens = [...atendimento.itens, novoItem];
-    const novoValorTotal = calcularValorTotalAtendimento(novosItens);
-
-    atualizarAtendimento(atendimentoId, { 
-      itens: novosItens,
-      valorTotal: novoValorTotal
-    });
+  const adicionarItemAtendimento = async (atendimentoId: string, itemData: Omit<ItemAtendimento, 'id' | 'nome'>) => {
+    const novoItem = await supabaseService.addItemAtendimento(atendimentoId, itemData);
     
-    toast({ title: "Item adicionado ao atendimento!" });
+    if (novoItem) {
+      // Atualizar o atendimento com o novo item
+      await fetchAllData(); // Recarregar todos os dados para garantir consistência
+      toast({ title: "Item adicionado ao atendimento!" });
+      return novoItem;
+    }
+    return null;
   };
 
-  const removerItemAtendimento = (atendimentoId: string, itemId: string) => {
-    const atendimento = getAtendimentoById(atendimentoId);
-    if (!atendimento) {
-      toast({
-        title: "Erro ao remover item",
-        description: "Atendimento não encontrado.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const novosItens = atendimento.itens.filter(i => i.id !== itemId);
-    const novoValorTotal = calcularValorTotalAtendimento(novosItens);
-
-    atualizarAtendimento(atendimentoId, { 
-      itens: novosItens,
-      valorTotal: novoValorTotal
-    });
+  const removerItemAtendimento = async (atendimentoId: string, itemId: string) => {
+    const success = await supabaseService.removeItemAtendimento(atendimentoId, itemId);
     
-    toast({ title: "Item removido do atendimento!" });
-  };
-
-  const refreshData = () => {
-    fetchAllData();
+    if (success) {
+      await fetchAllData(); // Recarregar todos os dados para garantir consistência
+      toast({ title: "Item removido do atendimento!" });
+    }
+    return success;
   };
 
   const value = {
@@ -509,7 +589,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     
     // Estado da interface
     loading,
-    refreshData
+    refreshData: fetchAllData
   };
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

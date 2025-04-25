@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useData } from '@/context/DataContext';
 import { Atendimento, ItemAtendimento } from '@/types';
 import { PageHeader } from '@/components/common/PageHeader';
@@ -35,6 +36,7 @@ import {
 import { Calendar, Plus, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import * as supabaseService from '@/services/supabaseService';
 
 interface FormValues {
   data: string;
@@ -66,7 +68,8 @@ const Atendimentos = () => {
     getServicoById,
     getProdutoById,
     adicionarItemAtendimento,
-    removerItemAtendimento
+    removerItemAtendimento,
+    refreshData
   } = useData();
   
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -90,6 +93,10 @@ const Atendimentos = () => {
   const selectedClienteId = watch('clienteId');
   const selectedItemTipo = watchItem('tipo');
 
+  useEffect(() => {
+    refreshData();
+  }, [refreshData]);
+
   const columns: Column<Atendimento>[] = [
     { 
       header: 'Data', 
@@ -98,9 +105,9 @@ const Atendimentos = () => {
         return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
       }
     },
-    { header: 'Cliente', accessor: 'clienteNome' as keyof Atendimento },
-    { header: 'Pet', accessor: 'petNome' as keyof Atendimento },
-    { header: 'Funcionário', accessor: 'funcionarioNome' as keyof Atendimento },
+    { header: 'Cliente', accessor: 'clienteNome' },
+    { header: 'Pet', accessor: 'petNome' },
+    { header: 'Funcionário', accessor: 'funcionarioNome' },
     { 
       header: 'Status', 
       accessor: (atendimento: Atendimento) => (
@@ -170,26 +177,27 @@ const Atendimentos = () => {
     setIsDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (currentAtendimento) {
-      removerAtendimento(currentAtendimento.id);
+      await supabaseService.deleteAtendimento(currentAtendimento.id);
+      refreshData();
+      setIsDeleteDialogOpen(false);
     }
-    setIsDeleteDialogOpen(false);
   };
 
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = async (data: FormValues) => {
     if (currentAtendimento) {
-      atualizarAtendimento(currentAtendimento.id, {
+      await supabaseService.updateAtendimento(currentAtendimento.id, {
         ...data,
         data: new Date(data.data).toISOString(),
       });
     } else {
-      adicionarAtendimento({
+      await supabaseService.addAtendimento({
         ...data,
         data: new Date(data.data).toISOString(),
-        itens: [],
       });
     }
+    refreshData();
     setIsFormOpen(false);
   };
 
@@ -210,42 +218,40 @@ const Atendimentos = () => {
     setIsItemDialogOpen(true);
   };
 
-  const handleSubmitItemForm = (data: ItemFormValues) => {
+  const handleSubmitItemForm = async (data: ItemFormValues) => {
     if (!currentAtendimento) return;
 
     const { tipo, itemId, quantidade } = data;
     
-    let nome = '';
     let valorUnitario = 0;
     
     if (tipo === 'servico') {
       const servico = getServicoById(itemId);
       if (servico) {
-        nome = servico.nome;
         valorUnitario = servico.preco;
       }
     } else {
       const produto = getProdutoById(itemId);
       if (produto) {
-        nome = produto.nome;
         valorUnitario = produto.preco;
       }
     }
 
-    adicionarItemAtendimento(currentAtendimento.id, {
+    await supabaseService.addItemAtendimento(currentAtendimento.id, {
       tipo,
       itemId,
       quantidade,
-      valorUnitario,
-      nome
+      valorUnitario
     });
     
+    refreshData();
     setIsItemDialogOpen(false);
   };
 
-  const handleRemoveItem = (itemId: string) => {
+  const handleRemoveItem = async (itemId: string) => {
     if (!currentAtendimento) return;
-    removerItemAtendimento(currentAtendimento.id, itemId);
+    await supabaseService.removeItemAtendimento(currentAtendimento.id, itemId);
+    refreshData();
   };
 
   return (
@@ -534,7 +540,7 @@ const Atendimentos = () => {
                   render={({ field }) => (
                     <Select onValueChange={field.onChange} value={field.value}>
                       <SelectTrigger>
-                        <SelectValue placeholder={`Selecione o ${selectedItemTipo === 'serviço' ? 'serviço' : 'produto'}`} />
+                        <SelectValue placeholder={`Selecione o ${selectedItemTipo === 'servico' ? 'serviço' : 'produto'}`} />
                       </SelectTrigger>
                       <SelectContent>
                         {selectedItemTipo === 'servico' 
