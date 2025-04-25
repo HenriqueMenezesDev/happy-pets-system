@@ -8,7 +8,7 @@ import {
   Atendimento, 
   ItemAtendimento 
 } from '@/types';
-import { toast } from '@/components/ui/toast';
+import { toast } from '@/hooks/use-toast';
 
 const mapDbClienteToCliente = (dbCliente: any): Cliente => {
   return {
