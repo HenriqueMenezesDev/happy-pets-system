@@ -1,9 +1,15 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { Cliente, Pet, Funcionario, Servico, Produto, Atendimento, ItemAtendimento } from '@/types';
-import { toast } from '@/hooks/use-toast';
+import { 
+  Cliente, 
+  Pet, 
+  Funcionario, 
+  Servico, 
+  Produto, 
+  Atendimento, 
+  ItemAtendimento 
+} from '@/types';
+import { toast } from '@/components/ui/toast';
 
-// Helper functions to map between database and frontend models
 const mapDbClienteToCliente = (dbCliente: any): Cliente => {
   return {
     id: dbCliente.id,
@@ -62,7 +68,31 @@ const mapDbProdutoToProduto = (dbProduto: any): Produto => {
   };
 };
 
-// Cliente services
+const handleError = (error: any, operacao: string) => {
+  console.error(`Erro ao ${operacao}:`, error);
+  toast({
+    title: `Erro ao ${operacao}`,
+    description: error.message,
+    variant: 'destructive'
+  });
+};
+
+const addRecord = async <T>(table: string, data: Omit<T, 'id'>) => {
+  try {
+    const { data: newRecord, error } = await supabase
+      .from(table)
+      .insert(data)
+      .select('*')
+      .single();
+
+    if (error) throw error;
+    return newRecord;
+  } catch (error: any) {
+    handleError(error, `adicionar ${table}`);
+    return null;
+  }
+};
+
 export async function fetchClientes() {
   try {
     const { data, error } = await supabase
@@ -84,30 +114,7 @@ export async function fetchClientes() {
 }
 
 export async function addCliente(cliente: Omit<Cliente, 'id' | 'dataCadastro'>) {
-  try {
-    const { data, error } = await supabase
-      .from('clientes')
-      .insert([{ 
-        nome: cliente.nome,
-        email: cliente.email,
-        telefone: cliente.telefone,
-        endereco: cliente.endereco,
-        cpf: cliente.cpf
-      }])
-      .select('*')
-      .single();
-
-    if (error) throw error;
-    return mapDbClienteToCliente(data);
-  } catch (error: any) {
-    console.error('Erro ao adicionar cliente:', error.message);
-    toast({
-      title: 'Erro ao adicionar cliente',
-      description: error.message,
-      variant: 'destructive'
-    });
-    return null;
-  }
+  return addRecord<Cliente>('clientes', cliente);
 }
 
 export async function updateCliente(id: string, cliente: Partial<Cliente>) {
@@ -122,12 +129,7 @@ export async function updateCliente(id: string, cliente: Partial<Cliente>) {
     if (error) throw error;
     return mapDbClienteToCliente(data);
   } catch (error: any) {
-    console.error('Erro ao atualizar cliente:', error.message);
-    toast({
-      title: 'Erro ao atualizar cliente',
-      description: error.message,
-      variant: 'destructive'
-    });
+    handleError(error, 'atualizar cliente');
     return null;
   }
 }
@@ -142,17 +144,11 @@ export async function deleteCliente(id: string) {
     if (error) throw error;
     return true;
   } catch (error: any) {
-    console.error('Erro ao excluir cliente:', error.message);
-    toast({
-      title: 'Erro ao excluir cliente',
-      description: error.message,
-      variant: 'destructive'
-    });
+    handleError(error, 'excluir cliente');
     return false;
   }
 }
 
-// Pet services
 export async function fetchPets() {
   try {
     const { data, error } = await supabase
@@ -165,7 +161,6 @@ export async function fetchPets() {
 
     if (error) throw error;
     
-    // Format pets with cliente nome
     return data.map(mapDbPetToPet);
   } catch (error: any) {
     console.error('Erro ao buscar pets:', error.message);
@@ -179,32 +174,7 @@ export async function fetchPets() {
 }
 
 export async function addPet(pet: Omit<Pet, 'id' | 'clienteNome'>) {
-  try {
-    const { data, error } = await supabase
-      .from('pets')
-      .insert([{
-        nome: pet.nome,
-        especie: pet.especie,
-        raca: pet.raca,
-        data_nascimento: pet.dataNascimento,
-        peso: pet.peso,
-        sexo: pet.sexo,
-        cliente_id: pet.clienteId
-      }])
-      .select('*, clientes(nome)')
-      .single();
-
-    if (error) throw error;
-    return mapDbPetToPet(data);
-  } catch (error: any) {
-    console.error('Erro ao adicionar pet:', error.message);
-    toast({
-      title: 'Erro ao adicionar pet',
-      description: error.message,
-      variant: 'destructive'
-    });
-    return null;
-  }
+  return addRecord<Pet>('pets', pet);
 }
 
 export async function updatePet(id: string, pet: Partial<Pet>) {
@@ -259,7 +229,6 @@ export async function deletePet(id: string) {
   }
 }
 
-// Funcionario services
 export async function fetchFuncionarios() {
   try {
     const { data, error } = await supabase
@@ -281,29 +250,7 @@ export async function fetchFuncionarios() {
 }
 
 export async function addFuncionario(funcionario: Omit<Funcionario, 'id' | 'dataCadastro'>) {
-  try {
-    const { data, error } = await supabase
-      .from('funcionarios')
-      .insert([{
-        nome: funcionario.nome,
-        cargo: funcionario.cargo,
-        email: funcionario.email,
-        telefone: funcionario.telefone
-      }])
-      .select('*')
-      .single();
-
-    if (error) throw error;
-    return mapDbFuncionarioToFuncionario(data);
-  } catch (error: any) {
-    console.error('Erro ao adicionar funcionário:', error.message);
-    toast({
-      title: 'Erro ao adicionar funcionário',
-      description: error.message,
-      variant: 'destructive'
-    });
-    return null;
-  }
+  return addRecord<Funcionario>('funcionarios', funcionario);
 }
 
 export async function updateFuncionario(id: string, funcionario: Partial<Funcionario>) {
@@ -318,12 +265,7 @@ export async function updateFuncionario(id: string, funcionario: Partial<Funcion
     if (error) throw error;
     return mapDbFuncionarioToFuncionario(data);
   } catch (error: any) {
-    console.error('Erro ao atualizar funcionário:', error.message);
-    toast({
-      title: 'Erro ao atualizar funcionário',
-      description: error.message,
-      variant: 'destructive'
-    });
+    handleError(error, 'atualizar funcionário');
     return null;
   }
 }
@@ -338,17 +280,11 @@ export async function deleteFuncionario(id: string) {
     if (error) throw error;
     return true;
   } catch (error: any) {
-    console.error('Erro ao excluir funcionário:', error.message);
-    toast({
-      title: 'Erro ao excluir funcionário',
-      description: error.message,
-      variant: 'destructive'
-    });
+    handleError(error, 'excluir funcionário');
     return false;
   }
 }
 
-// Servico services
 export async function fetchServicos() {
   try {
     const { data, error } = await supabase
@@ -370,24 +306,7 @@ export async function fetchServicos() {
 }
 
 export async function addServico(servico: Omit<Servico, 'id'>) {
-  try {
-    const { data, error } = await supabase
-      .from('servicos')
-      .insert([servico])
-      .select('*')
-      .single();
-
-    if (error) throw error;
-    return mapDbServicoToServico(data);
-  } catch (error: any) {
-    console.error('Erro ao adicionar serviço:', error.message);
-    toast({
-      title: 'Erro ao adicionar serviço',
-      description: error.message,
-      variant: 'destructive'
-    });
-    return null;
-  }
+  return addRecord<Servico>('servicos', servico);
 }
 
 export async function updateServico(id: string, servico: Partial<Servico>) {
@@ -432,7 +351,6 @@ export async function deleteServico(id: string) {
   }
 }
 
-// Produto services
 export async function fetchProdutos() {
   try {
     const { data, error } = await supabase
@@ -454,24 +372,7 @@ export async function fetchProdutos() {
 }
 
 export async function addProduto(produto: Omit<Produto, 'id'>) {
-  try {
-    const { data, error } = await supabase
-      .from('produtos')
-      .insert([produto])
-      .select('*')
-      .single();
-
-    if (error) throw error;
-    return mapDbProdutoToProduto(data);
-  } catch (error: any) {
-    console.error('Erro ao adicionar produto:', error.message);
-    toast({
-      title: 'Erro ao adicionar produto',
-      description: error.message,
-      variant: 'destructive'
-    });
-    return null;
-  }
+  return addRecord<Produto>('produtos', produto);
 }
 
 export async function updateProduto(id: string, produto: Partial<Produto>) {
@@ -516,7 +417,6 @@ export async function deleteProduto(id: string) {
   }
 }
 
-// Atendimento services
 export async function fetchAtendimentos() {
   try {
     const { data, error } = await supabase
@@ -531,7 +431,6 @@ export async function fetchAtendimentos() {
 
     if (error) throw error;
     
-    // Map data to frontend model
     return data.map(item => {
       return {
         id: item.id,
@@ -545,7 +444,7 @@ export async function fetchAtendimentos() {
         funcionarioNome: item.funcionarios?.nome,
         observacoes: item.observacoes || '',
         valorTotal: item.valor_total,
-        itens: [] // Itens serão carregados separadamente
+        itens: []
       };
     }) as Atendimento[];
   } catch (error: any) {
@@ -568,7 +467,6 @@ export async function fetchItensAtendimento(atendimentoId: string) {
 
     if (error) throw error;
     
-    // Map data to frontend model
     return data.map(item => {
       return {
         id: item.id,
@@ -576,7 +474,7 @@ export async function fetchItensAtendimento(atendimentoId: string) {
         itemId: item.item_id,
         quantidade: item.quantidade,
         valorUnitario: item.valor_unitario,
-        nome: '' // Nome será preenchido pelo frontend
+        nome: ''
       };
     }) as ItemAtendimento[];
   } catch (error: any) {
@@ -591,42 +489,7 @@ export async function fetchItensAtendimento(atendimentoId: string) {
 }
 
 export async function addAtendimento(atendimento: Omit<Atendimento, 'id' | 'valorTotal' | 'itens'>) {
-  try {
-    const { data, error } = await supabase
-      .from('atendimentos')
-      .insert([{
-        data: atendimento.data,
-        status: atendimento.status,
-        cliente_id: atendimento.clienteId,
-        pet_id: atendimento.petId,
-        funcionario_id: atendimento.funcionarioId,
-        observacoes: atendimento.observacoes,
-        valor_total: 0 // Será atualizado pelo trigger quando itens forem adicionados
-      }])
-      .select('*')
-      .single();
-
-    if (error) throw error;
-    return {
-      id: data.id,
-      data: data.data,
-      status: data.status as 'agendado' | 'em_andamento' | 'concluido' | 'cancelado',
-      clienteId: data.cliente_id,
-      petId: data.pet_id,
-      funcionarioId: data.funcionario_id,
-      observacoes: data.observacoes || '',
-      valorTotal: data.valor_total,
-      itens: []
-    };
-  } catch (error: any) {
-    console.error('Erro ao adicionar atendimento:', error.message);
-    toast({
-      title: 'Erro ao adicionar atendimento',
-      description: error.message,
-      variant: 'destructive'
-    });
-    return null;
-  }
+  return addRecord<Atendimento>('atendimentos', atendimento);
 }
 
 export async function updateAtendimento(id: string, atendimento: Partial<Atendimento>) {
@@ -654,7 +517,6 @@ export async function updateAtendimento(id: string, atendimento: Partial<Atendim
 
     if (error) throw error;
     
-    // Get items for the updated atendimento
     const itens = await fetchItensAtendimento(id);
     
     return {
@@ -704,7 +566,6 @@ export async function deleteAtendimento(id: string) {
 
 export async function addItemAtendimento(atendimentoId: string, item: Omit<ItemAtendimento, 'id' | 'nome'>) {
   try {
-    // Primeiro verificamos se o item existe (produto ou serviço)
     let nome = '';
     
     if (item.tipo === 'produto') {
@@ -739,7 +600,6 @@ export async function addItemAtendimento(atendimentoId: string, item: Omit<ItemA
 
     if (error) throw error;
     
-    // Obter o atendimento atualizado para retornar o valor total
     const { data: atendimentoAtualizado } = await supabase
       .from('atendimentos')
       .select('valor_total')
