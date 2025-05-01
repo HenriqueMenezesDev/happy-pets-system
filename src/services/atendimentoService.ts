@@ -67,9 +67,19 @@ export async function fetchItensAtendimento(atendimentoId: string) {
 
 export async function addAtendimento(atendimento: Omit<Atendimento, 'id' | 'valorTotal' | 'itens'>) {
   try {
+    // Convert from frontend model to database model
+    const dbAtendimento = {
+      data: atendimento.data,
+      cliente_id: atendimento.clienteId,
+      pet_id: atendimento.petId,
+      funcionario_id: atendimento.funcionarioId,
+      status: atendimento.status,
+      observacoes: atendimento.observacoes
+    };
+
     const { data, error } = await supabase
       .from('atendimentos')
-      .insert(atendimento)
+      .insert(dbAtendimento)
       .select(`
         *,
         clientes(nome),
@@ -185,15 +195,17 @@ export async function addItemAtendimento(atendimentoId: string, item: Omit<ItemA
       if (data) nome = data.nome;
     }
 
+    const dbItem = {
+      atendimento_id: atendimentoId,
+      tipo: item.tipo,
+      item_id: item.itemId,
+      quantidade: item.quantidade,
+      valor_unitario: item.valorUnitario
+    };
+
     const { data, error } = await supabase
       .from('itens_atendimento')
-      .insert([{
-        atendimento_id: atendimentoId,
-        tipo: item.tipo,
-        item_id: item.itemId,
-        quantidade: item.quantidade,
-        valor_unitario: item.valorUnitario
-      }])
+      .insert(dbItem)
       .select('*')
       .single();
 

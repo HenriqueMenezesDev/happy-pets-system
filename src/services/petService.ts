@@ -25,9 +25,20 @@ export async function fetchPets() {
 
 export async function addPet(pet: Omit<Pet, 'id' | 'clienteNome'>) {
   try {
+    // Convert from frontend model to database model
+    const dbPet = {
+      nome: pet.nome,
+      especie: pet.especie,
+      raca: pet.raca,
+      data_nascimento: pet.dataNascimento,
+      peso: pet.peso,
+      sexo: pet.sexo,
+      cliente_id: pet.clienteId
+    };
+
     const { data, error } = await supabase
       .from('pets')
-      .insert(pet)
+      .insert(dbPet)
       .select('*, clientes(nome)')
       .single();
 

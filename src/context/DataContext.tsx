@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { 
   Cliente, 
@@ -9,8 +8,46 @@ import {
   Atendimento,
   ItemAtendimento 
 } from '@/types';
-import { useToast } from '@/components/ui/use-toast';
-import * as supabaseService from '@/services/supabaseService';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  fetchClientes, 
+  addCliente, 
+  updateCliente, 
+  deleteCliente 
+} from '@/services/clienteService';
+import { 
+  fetchPets, 
+  addPet, 
+  updatePet, 
+  deletePet 
+} from '@/services/petService';
+import { 
+  fetchFuncionarios, 
+  addFuncionario, 
+  updateFuncionario, 
+  deleteFuncionario 
+} from '@/services/funcionarioService';
+import { 
+  fetchServicos, 
+  addServico, 
+  updateServico, 
+  deleteServico 
+} from '@/services/servicoService';
+import { 
+  fetchProdutos, 
+  addProduto, 
+  updateProduto, 
+  deleteProduto 
+} from '@/services/produtoService';
+import { 
+  fetchAtendimentos, 
+  fetchItensAtendimento, 
+  addAtendimento, 
+  updateAtendimento, 
+  deleteAtendimento, 
+  addItemAtendimento, 
+  removeItemAtendimento 
+} from '@/services/atendimentoService';
 
 interface DataContextType {
   // Dados
@@ -96,12 +133,12 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         produtosData,
         atendimentosData
       ] = await Promise.all([
-        supabaseService.fetchClientes(),
-        supabaseService.fetchPets(),
-        supabaseService.fetchFuncionarios(),
-        supabaseService.fetchServicos(),
-        supabaseService.fetchProdutos(),
-        supabaseService.fetchAtendimentos()
+        fetchClientes(),
+        fetchPets(),
+        fetchFuncionarios(),
+        fetchServicos(),
+        fetchProdutos(),
+        fetchAtendimentos()
       ]);
       
       setClientes(clientesData);
@@ -113,7 +150,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       // Para cada atendimento, buscar os itens
       const atendimentosComItens = await Promise.all(
         atendimentosData.map(async (atendimento) => {
-          const itens = await supabaseService.fetchItensAtendimento(atendimento.id);
+          const itens = await fetchItensAtendimento(atendimento.id);
           
           // Adicionar nome a cada item
           const itensComNome = itens.map(item => {
@@ -157,7 +194,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
   // CRUD para Clientes
   const adicionarCliente = async (clienteData: Omit<Cliente, 'id' | 'dataCadastro'>) => {
-    const novoCliente = await supabaseService.addCliente(clienteData);
+    const novoCliente = await addCliente(clienteData);
     
     if (novoCliente) {
       setClientes(prevClientes => [...prevClientes, novoCliente]);
@@ -170,7 +207,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const atualizarCliente = async (id: string, clienteData: Partial<Cliente>) => {
-    const clienteAtualizado = await supabaseService.updateCliente(id, clienteData);
+    const clienteAtualizado = await updateCliente(id, clienteData);
     
     if (clienteAtualizado) {
       setClientes(prevClientes =>
@@ -206,7 +243,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       return false;
     }
 
-    const success = await supabaseService.deleteCliente(id);
+    const success = await deleteCliente(id);
     
     if (success) {
       setClientes(prevClientes => prevClientes.filter(cliente => cliente.id !== id));
@@ -231,7 +268,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       return null;
     }
 
-    const novoPet = await supabaseService.addPet(petData);
+    const novoPet = await addPet(petData);
     
     if (novoPet) {
       // Adicionar nome do cliente ao novo pet para exibição
@@ -248,7 +285,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const atualizarPet = async (id: string, petData: Partial<Pet>) => {
-    const petAtualizado = await supabaseService.updatePet(id, petData);
+    const petAtualizado = await updatePet(id, petData);
     
     if (petAtualizado) {
       // Se o cliente foi alterado, atualizar o nome do cliente
@@ -284,7 +321,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       return false;
     }
 
-    const success = await supabaseService.deletePet(id);
+    const success = await deletePet(id);
     
     if (success) {
       setPets(prevPets => prevPets.filter(pet => pet.id !== id));
@@ -303,7 +340,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
   // CRUD para Funcionários
   const adicionarFuncionario = async (funcionarioData: Omit<Funcionario, 'id' | 'dataCadastro'>) => {
-    const novoFuncionario = await supabaseService.addFuncionario(funcionarioData);
+    const novoFuncionario = await addFuncionario(funcionarioData);
     
     if (novoFuncionario) {
       setFuncionarios(prevFuncionarios => [...prevFuncionarios, novoFuncionario]);
@@ -313,7 +350,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const atualizarFuncionario = async (id: string, funcionarioData: Partial<Funcionario>) => {
-    const funcionarioAtualizado = await supabaseService.updateFuncionario(id, funcionarioData);
+    const funcionarioAtualizado = await updateFuncionario(id, funcionarioData);
     
     if (funcionarioAtualizado) {
       setFuncionarios(prevFuncionarios =>
@@ -338,7 +375,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       return false;
     }
     
-    const success = await supabaseService.deleteFuncionario(id);
+    const success = await deleteFuncionario(id);
     
     if (success) {
       setFuncionarios(prevFuncionarios => prevFuncionarios.filter(funcionario => funcionario.id !== id));
@@ -353,7 +390,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
   // CRUD para Serviços
   const adicionarServico = async (servicoData: Omit<Servico, 'id'>) => {
-    const novoServico = await supabaseService.addServico(servicoData);
+    const novoServico = await addServico(servicoData);
     
     if (novoServico) {
       setServicos(prevServicos => [...prevServicos, novoServico]);
@@ -363,7 +400,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const atualizarServico = async (id: string, servicoData: Partial<Servico>) => {
-    const servicoAtualizado = await supabaseService.updateServico(id, servicoData);
+    const servicoAtualizado = await updateServico(id, servicoData);
     
     if (servicoAtualizado) {
       setServicos(prevServicos =>
@@ -391,7 +428,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       return false;
     }
     
-    const success = await supabaseService.deleteServico(id);
+    const success = await deleteServico(id);
     
     if (success) {
       setServicos(prevServicos => prevServicos.filter(servico => servico.id !== id));
@@ -406,7 +443,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
   // CRUD para Produtos
   const adicionarProduto = async (produtoData: Omit<Produto, 'id'>) => {
-    const novoProduto = await supabaseService.addProduto(produtoData);
+    const novoProduto = await addProduto(produtoData);
     
     if (novoProduto) {
       setProdutos(prevProdutos => [...prevProdutos, novoProduto]);
@@ -416,7 +453,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const atualizarProduto = async (id: string, produtoData: Partial<Produto>) => {
-    const produtoAtualizado = await supabaseService.updateProduto(id, produtoData);
+    const produtoAtualizado = await updateProduto(id, produtoData);
     
     if (produtoAtualizado) {
       setProdutos(prevProdutos =>
@@ -444,7 +481,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       return false;
     }
     
-    const success = await supabaseService.deleteProduto(id);
+    const success = await deleteProduto(id);
     
     if (success) {
       setProdutos(prevProdutos => prevProdutos.filter(produto => produto.id !== id));
@@ -459,7 +496,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
   // CRUD para Atendimentos
   const adicionarAtendimento = async (atendimentoData: Omit<Atendimento, 'id' | 'valorTotal' | 'itens'>) => {
-    const novoAtendimento = await supabaseService.addAtendimento(atendimentoData);
+    const novoAtendimento = await addAtendimento(atendimentoData);
     
     if (novoAtendimento) {
       // Adicionar nomes para exibição
@@ -483,7 +520,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const atualizarAtendimento = async (id: string, atendimentoData: Partial<Atendimento>) => {
-    const atendimentoAtualizado = await supabaseService.updateAtendimento(id, atendimentoData);
+    const atendimentoAtualizado = await updateAtendimento(id, atendimentoData);
     
     if (atendimentoAtualizado) {
       setAtendimentos(prev =>
@@ -498,7 +535,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const removerAtendimento = async (id: string) => {
-    const success = await supabaseService.deleteAtendimento(id);
+    const success = await deleteAtendimento(id);
     
     if (success) {
       setAtendimentos(prev => prev.filter(atendimento => atendimento.id !== id));
@@ -513,7 +550,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
   // Operações para itens de atendimento
   const adicionarItemAtendimento = async (atendimentoId: string, itemData: Omit<ItemAtendimento, 'id' | 'nome'>) => {
-    const novoItem = await supabaseService.addItemAtendimento(atendimentoId, itemData);
+    const novoItem = await addItemAtendimento(atendimentoId, itemData);
     
     if (novoItem) {
       // Atualizar o atendimento com o novo item
@@ -525,7 +562,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const removerItemAtendimento = async (atendimentoId: string, itemId: string) => {
-    const success = await supabaseService.removeItemAtendimento(atendimentoId, itemId);
+    const success = await removeItemAtendimento(atendimentoId, itemId);
     
     if (success) {
       await fetchAllData(); // Recarregar todos os dados para garantir consistência

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useData } from '@/context/DataContext';
 import { Atendimento, ItemAtendimento } from '@/types';
@@ -36,7 +35,13 @@ import {
 import { Calendar, Plus, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import * as supabaseService from '@/services/supabaseService';
+import { 
+  deleteAtendimento, 
+  addAtendimento, 
+  updateAtendimento, 
+  addItemAtendimento, 
+  removeItemAtendimento 
+} from '@/services/atendimentoService';
 
 interface FormValues {
   data: string;
@@ -179,7 +184,7 @@ const Atendimentos = () => {
 
   const confirmDelete = async () => {
     if (currentAtendimento) {
-      await supabaseService.deleteAtendimento(currentAtendimento.id);
+      await deleteAtendimento(currentAtendimento.id);
       refreshData();
       setIsDeleteDialogOpen(false);
     }
@@ -187,12 +192,12 @@ const Atendimentos = () => {
 
   const onSubmit = async (data: FormValues) => {
     if (currentAtendimento) {
-      await supabaseService.updateAtendimento(currentAtendimento.id, {
+      await updateAtendimento(currentAtendimento.id, {
         ...data,
         data: new Date(data.data).toISOString(),
       });
     } else {
-      await supabaseService.addAtendimento({
+      await addAtendimento({
         ...data,
         data: new Date(data.data).toISOString(),
       });
@@ -237,7 +242,7 @@ const Atendimentos = () => {
       }
     }
 
-    await supabaseService.addItemAtendimento(currentAtendimento.id, {
+    await addItemAtendimento(currentAtendimento.id, {
       tipo,
       itemId,
       quantidade,
@@ -250,7 +255,7 @@ const Atendimentos = () => {
 
   const handleRemoveItem = async (itemId: string) => {
     if (!currentAtendimento) return;
-    await supabaseService.removeItemAtendimento(currentAtendimento.id, itemId);
+    await removeItemAtendimento(currentAtendimento.id, itemId);
     refreshData();
   };
 
