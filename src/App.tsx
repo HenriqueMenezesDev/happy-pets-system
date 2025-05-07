@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { MainLayout } from "./components/layout/MainLayout";
 import { DataProvider } from "./context/DataContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -46,7 +46,7 @@ const App = () => (
               <Route path="/agendamento-online" element={<AgendamentoOnline />} />
 
               {/* Rotas dentro do layout principal */}
-              <Route path="/" element={<MainLayout />}>
+              <Route path="/" element={<MainLayout><Outlet /></MainLayout>}>
                 <Route index element={<Dashboard />} />
                 <Route path="/clientes" element={<Clientes />} />
                 <Route path="/pets" element={<Pets />} />

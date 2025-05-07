@@ -140,7 +140,8 @@ const HorariosDisponiveis = () => {
       horarioAtual = setHours(horarioAtual, parseInt(horaInicioParts[0]));
       horarioAtual = setMinutes(horarioAtual, parseInt(horaInicioParts[1]));
       
-      const horarioFim = new Date();
+      // FIX: Use let instead of const for horarioFim
+      let horarioFim = new Date();
       horarioFim = setHours(horarioFim, parseInt(horaFimParts[0]));
       horarioFim = setMinutes(horarioFim, parseInt(horaFimParts[1]));
       
@@ -403,7 +404,8 @@ const HorariosDisponiveis = () => {
                       horarioAtual = setHours(horarioAtual, parseInt(horaInicioParts[0]));
                       horarioAtual = setMinutes(horarioAtual, parseInt(horaInicioParts[1]));
                       
-                      const horarioFim = new Date();
+                      // FIX: Use let instead of const for horarioFim
+                      let horarioFim = new Date();
                       horarioFim = setHours(horarioFim, parseInt(horaFimParts[0]));
                       horarioFim = setMinutes(horarioFim, parseInt(horaFimParts[1]));
                       
