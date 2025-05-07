@@ -35,8 +35,8 @@ const Login = () => {
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
     defaultValues: {
-      email: 'antonio.meneses1178@gmail.com',
-      senha: 'papodemaluco'
+      email: '',
+      senha: ''
     }
   });
 
