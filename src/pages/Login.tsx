@@ -33,7 +33,12 @@ const Login = () => {
   // Obter a página de redirecionamento após o login, se existir
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/';
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>();
+  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
+    defaultValues: {
+      email: '',
+      senha: ''
+    }
+  });
 
   // Redirecionar se já estiver autenticado
   useEffect(() => {
@@ -47,18 +52,22 @@ const Login = () => {
     setIsLoading(true);
     
     try {
+      console.log("Attempting login with:", data.email);
       const user = await login({
         email: data.email,
         senha: data.senha
       });
       
       if (user) {
+        console.log("Login successful, user:", user);
         // Redirecionar para a página anterior ou para a página inicial
         navigate(from, { replace: true });
       } else {
+        console.log("Login failed, no user returned");
         setError('Email ou senha inválidos');
       }
     } catch (err: any) {
+      console.error("Login error:", err);
       setError(err.message || 'Erro ao realizar login');
     } finally {
       setIsLoading(false);

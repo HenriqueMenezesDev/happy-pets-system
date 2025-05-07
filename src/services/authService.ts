@@ -20,33 +20,43 @@ export interface AuthState {
 export async function loginFuncionario(credentials: AuthCredentials) {
   try {
     // Buscar o funcionário pelo email
-    const { data: funcionario, error } = await supabase
+    const { data, error } = await supabase
       .from('funcionarios')
       .select('*')
       .eq('email_login', credentials.email)
-      .single();
+      .maybeSingle(); // Use maybeSingle instead of single to avoid the error
 
     if (error) throw error;
-    if (!funcionario) {
-      throw new Error('Credenciais inválidas');
+    if (!data) {
+      toast({
+        title: 'Erro de autenticação',
+        description: 'Email ou senha inválidos',
+        variant: 'destructive',
+      });
+      return null;
     }
 
     // IMPORTANTE: Em um ambiente de produção real, usaríamos bcrypt para verificar a senha
     // Este é apenas um exemplo simplificado para demonstração
     // Em um sistema real, usaríamos autenticação do Supabase ou outra solução segura
-    if (funcionario.senha_hash !== credentials.senha) {
-      throw new Error('Credenciais inválidas');
+    if (data.senha_hash !== credentials.senha) {
+      toast({
+        title: 'Erro de autenticação',
+        description: 'Email ou senha inválidos',
+        variant: 'destructive',
+      });
+      return null;
     }
 
     // Armazenar o funcionário no localStorage (em produção, use cookies ou JWT)
-    localStorage.setItem('authUser', JSON.stringify(funcionario));
+    localStorage.setItem('authUser', JSON.stringify(data));
     
     toast({
       title: 'Login realizado com sucesso!',
-      description: `Bem-vindo(a) ${funcionario.nome}`,
+      description: `Bem-vindo(a) ${data.nome}`,
     });
 
-    return mapDbFuncionarioToFuncionario(funcionario);
+    return mapDbFuncionarioToFuncionario(data);
   } catch (error: any) {
     handleError(error, 'fazer login');
     return null;
