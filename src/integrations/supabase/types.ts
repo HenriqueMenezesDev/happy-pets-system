@@ -9,6 +9,74 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      agendamentos: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          data: string
+          funcionario_id: string
+          hora: string
+          id: string
+          observacoes: string | null
+          pet_id: string
+          servico_id: string
+          status: string
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          data: string
+          funcionario_id: string
+          hora: string
+          id?: string
+          observacoes?: string | null
+          pet_id: string
+          servico_id: string
+          status?: string
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          data?: string
+          funcionario_id?: string
+          hora?: string
+          id?: string
+          observacoes?: string | null
+          pet_id?: string
+          servico_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agendamentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agendamentos_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agendamentos_pet_id_fkey"
+            columns: ["pet_id"]
+            isOneToOne: false
+            referencedRelation: "pets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agendamentos_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "servicos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       atendimentos: {
         Row: {
           cliente_id: string
@@ -102,27 +170,71 @@ export type Database = {
           cargo: string
           data_cadastro: string
           email: string
+          email_login: string | null
           id: string
           nome: string
+          perfil: string | null
+          senha_hash: string | null
           telefone: string
         }
         Insert: {
           cargo: string
           data_cadastro?: string
           email: string
+          email_login?: string | null
           id?: string
           nome: string
+          perfil?: string | null
+          senha_hash?: string | null
           telefone: string
         }
         Update: {
           cargo?: string
           data_cadastro?: string
           email?: string
+          email_login?: string | null
           id?: string
           nome?: string
+          perfil?: string | null
+          senha_hash?: string | null
           telefone?: string
         }
         Relationships: []
+      }
+      horarios_disponiveis: {
+        Row: {
+          created_at: string
+          data: string
+          disponivel: boolean
+          funcionario_id: string
+          hora: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          data: string
+          disponivel?: boolean
+          funcionario_id: string
+          hora: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          disponivel?: boolean
+          funcionario_id?: string
+          hora?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "horarios_disponiveis_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       itens_atendimento: {
         Row: {
@@ -158,6 +270,41 @@ export type Database = {
             columns: ["atendimento_id"]
             isOneToOne: false
             referencedRelation: "atendimentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lembretes_email: {
+        Row: {
+          agendamento_id: string
+          created_at: string
+          enviado_em: string | null
+          id: string
+          status: string
+          tipo: string
+        }
+        Insert: {
+          agendamento_id: string
+          created_at?: string
+          enviado_em?: string | null
+          id?: string
+          status?: string
+          tipo?: string
+        }
+        Update: {
+          agendamento_id?: string
+          created_at?: string
+          enviado_em?: string | null
+          id?: string
+          status?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lembretes_email_agendamento_id_fkey"
+            columns: ["agendamento_id"]
+            isOneToOne: false
+            referencedRelation: "agendamentos"
             referencedColumns: ["id"]
           },
         ]

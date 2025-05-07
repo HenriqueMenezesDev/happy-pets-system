@@ -30,6 +30,8 @@ export interface Funcionario {
   email: string;
   telefone: string;
   dataCadastro: string;
+  emailLogin?: string; // Campo para autenticação
+  perfil?: string; // Perfil de acesso: admin, atendente, etc.
 }
 
 export interface Servico {
@@ -71,4 +73,46 @@ export interface Atendimento {
   observacoes: string;
   itens: ItemAtendimento[];
   valorTotal: number;
+}
+
+// Novas interfaces para agendamento online
+
+export interface HorarioDisponivel {
+  id: string;
+  data: string; // Formato ISO: 'YYYY-MM-DD'
+  hora: string; // Formato: 'HH:MM'
+  funcionarioId: string;
+  funcionarioNome?: string; // Campo para exibição
+  disponivel: boolean;
+}
+
+export interface Agendamento {
+  id: string;
+  data: string; // Formato ISO: 'YYYY-MM-DD'
+  hora: string; // Formato: 'HH:MM'
+  status: 'agendado' | 'em_andamento' | 'concluido' | 'cancelado';
+  clienteId: string;
+  clienteNome?: string; // Campo para exibição
+  petId: string;
+  petNome?: string; // Campo para exibição
+  funcionarioId: string;
+  funcionarioNome?: string; // Campo para exibição
+  servicoId: string;
+  servicoNome?: string; // Campo para exibição
+  valorServico?: number; // Preço do serviço
+  observacoes: string;
+}
+
+export interface LembreteEmail {
+  id: string;
+  agendamentoId: string;
+  agendamento?: Agendamento & {
+    cliente?: Cliente;
+    pet?: Pet;
+    funcionario?: Funcionario;
+    servico?: Servico;
+  };
+  tipo: 'confirmacao' | 'lembrete';
+  status: 'pendente' | 'enviado' | 'erro';
+  enviadoEm?: string;
 }

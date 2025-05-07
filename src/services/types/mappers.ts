@@ -1,5 +1,5 @@
 
-import { Cliente, Pet, Funcionario, Servico, Produto, Atendimento, ItemAtendimento } from '@/types';
+import { Cliente, Pet, Funcionario, Servico, Produto, Atendimento, ItemAtendimento, HorarioDisponivel, Agendamento, LembreteEmail } from '@/types';
 
 export const mapDbClienteToCliente = (dbCliente: any): Cliente => {
   return {
@@ -34,7 +34,9 @@ export const mapDbFuncionarioToFuncionario = (dbFuncionario: any): Funcionario =
     cargo: dbFuncionario.cargo,
     email: dbFuncionario.email,
     telefone: dbFuncionario.telefone,
-    dataCadastro: dbFuncionario.data_cadastro
+    dataCadastro: dbFuncionario.data_cadastro,
+    emailLogin: dbFuncionario.email_login,
+    perfil: dbFuncionario.perfil
   };
 };
 
@@ -56,5 +58,117 @@ export const mapDbProdutoToProduto = (dbProduto: any): Produto => {
     preco: dbProduto.preco,
     estoque: dbProduto.estoque,
     categoria: dbProduto.categoria
+  };
+};
+
+export const mapDbAtendimentoToAtendimento = (dbAtendimento: any): Atendimento => {
+  return {
+    id: dbAtendimento.id,
+    data: dbAtendimento.data,
+    status: dbAtendimento.status,
+    clienteId: dbAtendimento.cliente_id,
+    clienteNome: dbAtendimento.clientes?.nome,
+    petId: dbAtendimento.pet_id,
+    petNome: dbAtendimento.pets?.nome,
+    funcionarioId: dbAtendimento.funcionario_id,
+    funcionarioNome: dbAtendimento.funcionarios?.nome,
+    observacoes: dbAtendimento.observacoes || '',
+    itens: [], // Será preenchido após buscar os itens
+    valorTotal: dbAtendimento.valor_total
+  };
+};
+
+export const mapDbItemAtendimentoToItemAtendimento = (dbItem: any): ItemAtendimento => {
+  return {
+    id: dbItem.id,
+    tipo: dbItem.tipo,
+    itemId: dbItem.item_id,
+    quantidade: dbItem.quantidade,
+    valorUnitario: dbItem.valor_unitario,
+    nome: dbItem.nome || '' // O nome é preenchido depois
+  };
+};
+
+// Novos mappers para as novas entidades
+
+export const mapDbHorarioDisponivelToHorarioDisponivel = (dbHorario: any): HorarioDisponivel => {
+  return {
+    id: dbHorario.id,
+    data: dbHorario.data,
+    hora: dbHorario.hora,
+    funcionarioId: dbHorario.funcionario_id,
+    funcionarioNome: dbHorario.funcionarios?.nome,
+    disponivel: dbHorario.disponivel
+  };
+};
+
+export const mapDbAgendamentoToAgendamento = (dbAgendamento: any): Agendamento => {
+  return {
+    id: dbAgendamento.id,
+    data: dbAgendamento.data,
+    hora: dbAgendamento.hora,
+    status: dbAgendamento.status,
+    clienteId: dbAgendamento.cliente_id,
+    clienteNome: dbAgendamento.clientes?.nome,
+    petId: dbAgendamento.pet_id,
+    petNome: dbAgendamento.pets?.nome,
+    funcionarioId: dbAgendamento.funcionario_id,
+    funcionarioNome: dbAgendamento.funcionarios?.nome,
+    servicoId: dbAgendamento.servico_id,
+    servicoNome: dbAgendamento.servicos?.nome,
+    valorServico: dbAgendamento.servicos?.preco,
+    observacoes: dbAgendamento.observacoes || ''
+  };
+};
+
+export const mapDbLembreteEmailToLembreteEmail = (dbLembrete: any): LembreteEmail => {
+  // Mapear o agendamento aninhado se estiver presente
+  let agendamento;
+  if (dbLembrete.agendamentos) {
+    agendamento = {
+      id: dbLembrete.agendamentos.id,
+      data: dbLembrete.agendamentos.data,
+      hora: dbLembrete.agendamentos.hora,
+      status: dbLembrete.agendamentos.status,
+      clienteId: dbLembrete.agendamentos.cliente_id,
+      petId: dbLembrete.agendamentos.pet_id,
+      funcionarioId: dbLembrete.agendamentos.funcionario_id,
+      servicoId: dbLembrete.agendamentos.servico_id,
+      observacoes: dbLembrete.agendamentos.observacoes || '',
+    };
+    
+    // Adicionar dados relacionados se estiverem presentes
+    if (dbLembrete.agendamentos.clientes) {
+      agendamento.cliente = mapDbClienteToCliente(dbLembrete.agendamentos.clientes);
+      agendamento.clienteNome = agendamento.cliente.nome;
+    }
+    
+    if (dbLembrete.agendamentos.pets) {
+      agendamento.pet = mapDbPetToPet({
+        ...dbLembrete.agendamentos.pets,
+        cliente_id: dbLembrete.agendamentos.cliente_id
+      });
+      agendamento.petNome = agendamento.pet.nome;
+    }
+    
+    if (dbLembrete.agendamentos.funcionarios) {
+      agendamento.funcionario = mapDbFuncionarioToFuncionario(dbLembrete.agendamentos.funcionarios);
+      agendamento.funcionarioNome = agendamento.funcionario.nome;
+    }
+    
+    if (dbLembrete.agendamentos.servicos) {
+      agendamento.servico = mapDbServicoToServico(dbLembrete.agendamentos.servicos);
+      agendamento.servicoNome = agendamento.servico.nome;
+      agendamento.valorServico = agendamento.servico.preco;
+    }
+  }
+
+  return {
+    id: dbLembrete.id,
+    agendamentoId: dbLembrete.agendamento_id,
+    agendamento,
+    tipo: dbLembrete.tipo,
+    status: dbLembrete.status,
+    enviadoEm: dbLembrete.enviado_em
   };
 };
