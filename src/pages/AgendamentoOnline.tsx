@@ -104,7 +104,7 @@ const AgendamentoOnline = () => {
   const { register: registerCliente, handleSubmit: handleSubmitCliente, formState: { errors: errosCliente } } = 
     useForm<ClienteFormValues>();
   
-  const { register: registerPet, handleSubmit: handleSubmitPet, formState: { errors: errosPet } } = 
+  const { register: registerPet, handleSubmit: handleSubmitPet, control: controlPet, formState: { errors: errosPet } } = 
     useForm<PetFormValues>();
   
   const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm<AgendamentoFormValues>({
@@ -530,7 +530,8 @@ const AgendamentoOnline = () => {
                                   <Label htmlFor="especie">Espécie</Label>
                                   <Controller
                                     name="especie"
-                                    control={registerPet("especie", { required: "Espécie é obrigatória" }).control}
+                                    control={controlPet}
+                                    rules={{ required: "Espécie é obrigatória" }}
                                     render={({ field }) => (
                                       <Select 
                                         onValueChange={field.onChange} 
