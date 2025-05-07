@@ -8,11 +8,13 @@ import {
   AuthCredentials, 
   AuthState 
 } from '@/services/authService';
+import { toast } from '@/hooks/use-toast';
 
 interface AuthContextType extends AuthState {
   login: (credentials: AuthCredentials) => Promise<Funcionario | null>;
   logout: () => void;
   isAdmin: boolean;
+  isGerente: boolean;
 }
 
 // Criar o contexto
@@ -29,12 +31,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Verificar se existe um usuário logado no localStorage
     const checkAuth = async () => {
-      const currentUser = getCurrentUser();
-      setAuthState({
-        isAuthenticated: !!currentUser,
-        user: currentUser,
-        isLoading: false
-      });
+      try {
+        const currentUser = getCurrentUser();
+        
+        if (currentUser) {
+          // Se houver um usuário no localStorage, verificar se ainda é válido
+          // Em um sistema real você verificaria a validade do token JWT
+          setAuthState({
+            isAuthenticated: true,
+            user: currentUser,
+            isLoading: false
+          });
+        } else {
+          setAuthState({
+            isAuthenticated: false,
+            user: null,
+            isLoading: false
+          });
+        }
+      } catch (error) {
+        console.error("Erro ao verificar autenticação:", error);
+        // Em caso de erro, limpar o estado de autenticação
+        logoutFuncionario();
+        setAuthState({
+          isAuthenticated: false,
+          user: null,
+          isLoading: false
+        });
+      }
     };
 
     checkAuth();
@@ -42,15 +66,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (credentials: AuthCredentials) => {
     setAuthState(prev => ({ ...prev, isLoading: true }));
-    const user = await loginFuncionario(credentials);
     
-    setAuthState({
-      isAuthenticated: !!user,
-      user,
-      isLoading: false
-    });
-    
-    return user;
+    try {
+      const user = await loginFuncionario(credentials);
+      
+      if (user) {
+        setAuthState({
+          isAuthenticated: true,
+          user,
+          isLoading: false
+        });
+        
+        toast({
+          title: "Login realizado com sucesso!",
+          description: `Bem-vindo(a), ${user.nome}!`,
+        });
+      } else {
+        setAuthState({
+          isAuthenticated: false,
+          user: null,
+          isLoading: false
+        });
+      }
+      
+      return user;
+    } catch (error) {
+      console.error("Erro durante o login:", error);
+      setAuthState({
+        isAuthenticated: false,
+        user: null,
+        isLoading: false
+      });
+      return null;
+    }
   };
 
   const logout = () => {
@@ -60,17 +108,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       user: null,
       isLoading: false
     });
+    
+    toast({
+      title: "Logout realizado com sucesso!",
+    });
   };
 
-  // Verificar se o usuário é admin
+  // Verificar perfis de usuário
   const isAdmin = authState.user?.perfil === 'admin';
+  const isGerente = authState.user?.perfil === 'gerente' || isAdmin;
 
   return (
     <AuthContext.Provider value={{
       ...authState,
       login,
       logout,
-      isAdmin
+      isAdmin,
+      isGerente
     }}>
       {children}
     </AuthContext.Provider>

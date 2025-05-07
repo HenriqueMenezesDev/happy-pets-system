@@ -1,6 +1,6 @@
 
 import { ReactNode, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, 
   Users, 
@@ -9,28 +9,24 @@ import {
   Package,
   Settings, 
   Menu,
-  X
+  X,
+  LogOut,
+  User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-
-type SidebarItem = {
-  name: string;
-  href: string;
-  icon: React.ElementType;
-}
-
-const sidebarItems: SidebarItem[] = [
-  { name: 'Dashboard', href: '/', icon: Home },
-  { name: 'Clientes', href: '/clientes', icon: Users },
-  { name: 'Pets', href: '/pets', icon: PawPrint },
-  { name: 'Funcionários', href: '/funcionarios', icon: Users },
-  { name: 'Serviços', href: '/servicos', icon: Calendar },
-  { name: 'Produtos', href: '/produtos', icon: Package },
-  { name: 'Atendimentos', href: '/atendimentos', icon: Calendar },
-  { name: 'Configurações', href: '/configuracoes', icon: Settings },
-];
+import { useAuth } from '@/context/AuthContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Avatar,
+  AvatarFallback,
+} from "@/components/ui/avatar";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -39,8 +35,57 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout, isAdmin, isGerente } = useAuth();
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  // Função para obter as iniciais do nome do usuário
+  const getUserInitials = () => {
+    if (!user || !user.nome) return '?';
+    
+    const nameParts = user.nome.trim().split(' ');
+    if (nameParts.length === 1) return nameParts[0].charAt(0).toUpperCase();
+    
+    return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
+  };
+
+  // Filtrar itens da sidebar baseado no perfil do usuário
+  const getSidebarItems = () => {
+    const baseItems = [
+      { name: 'Dashboard', href: '/', icon: Home },
+      { name: 'Clientes', href: '/clientes', icon: Users },
+      { name: 'Pets', href: '/pets', icon: PawPrint },
+      { name: 'Atendimentos', href: '/atendimentos', icon: Calendar },
+    ];
+    
+    // Itens para gerentes e admin
+    if (isGerente) {
+      baseItems.push(
+        { name: 'Serviços', href: '/servicos', icon: Calendar },
+        { name: 'Produtos', href: '/produtos', icon: Package },
+        { name: 'Funcionários', href: '/funcionarios', icon: Users }
+      );
+    }
+    
+    // Itens apenas para admin
+    if (isAdmin) {
+      baseItems.push(
+        { name: 'Config. Horários', href: '/admin/horarios', icon: Settings },
+        { name: 'Admin Agendamentos', href: '/admin/agendamentos', icon: Calendar },
+        { name: 'Lembretes de Email', href: '/admin/lembretes-email', icon: Calendar }
+      );
+    }
+    
+    return baseItems;
+  };
+
+  const sidebarItems = getSidebarItems();
 
   return (
     <div className="flex min-h-screen relative">
@@ -109,7 +154,32 @@ export function MainLayout({ children }: MainLayoutProps) {
               <Menu className="h-5 w-5" />
             </Button>
             <div className="ml-auto flex items-center space-x-4">
-              <span className="text-sm font-medium text-gray-700">Admin</span>
+              <span className="text-sm font-medium text-gray-700 hidden md:block">
+                {user?.nome} 
+                <span className="text-xs ml-1 px-2 py-0.5 bg-gray-100 rounded-full">
+                  {user?.perfil}
+                </span>
+              </span>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <Avatar>
+                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    <span className="text-sm">{user?.nome}</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-600 flex items-center gap-2">
+                    <LogOut className="h-4 w-4" />
+                    <span>Sair</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </header>

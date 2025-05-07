@@ -45,49 +45,53 @@ const App = () => (
               } />
               <Route path="/agendamento-online" element={<AgendamentoOnline />} />
 
-              {/* Rotas dentro do layout principal */}
-              <Route path="/" element={<MainLayout><Outlet /></MainLayout>}>
+              {/* Redirecionar para login se não estiver autenticado */}
+              <Route path="/" element={
+                <PrivateRoute>
+                  <MainLayout>
+                    <Outlet />
+                  </MainLayout>
+                </PrivateRoute>
+              }>
                 <Route index element={<Dashboard />} />
                 <Route path="/clientes" element={<Clientes />} />
                 <Route path="/pets" element={<Pets />} />
-                <Route path="/agendamento" element={<Agendamento />} />
                 
-                {/* Rotas protegidas (apenas para funcionários logados) */}
+                {/* Rotas para todos os funcionários autenticados */}
+                <Route path="/agendamento" element={<Agendamento />} />
+                <Route path="/atendimentos" element={<Atendimentos />} />
+                
+                {/* Rotas apenas para gerentes e admin */}
                 <Route path="/funcionarios" element={
-                  <PrivateRoute>
+                  <PrivateRoute requiredRole="gerente">
                     <Funcionarios />
                   </PrivateRoute>
                 } />
                 <Route path="/servicos" element={
-                  <PrivateRoute>
+                  <PrivateRoute requiredRole="gerente">
                     <Servicos />
                   </PrivateRoute>
                 } />
                 <Route path="/produtos" element={
-                  <PrivateRoute>
+                  <PrivateRoute requiredRole="gerente">
                     <Produtos />
                   </PrivateRoute>
                 } />
-                <Route path="/atendimentos" element={
-                  <PrivateRoute>
-                    <Atendimentos />
-                  </PrivateRoute>
-                } />
                 
-                {/* Rotas administrativas */}
+                {/* Rotas apenas para admin */}
                 <Route path="/admin">
                   <Route path="horarios" element={
-                    <PrivateRoute adminOnly>
+                    <PrivateRoute requiredRole="admin">
                       <HorariosDisponiveis />
                     </PrivateRoute>
                   } />
                   <Route path="agendamentos" element={
-                    <PrivateRoute adminOnly>
+                    <PrivateRoute requiredRole="admin">
                       <AdminAgendamentos />
                     </PrivateRoute>
                   } />
                   <Route path="lembretes-email" element={
-                    <PrivateRoute adminOnly>
+                    <PrivateRoute requiredRole="admin">
                       <EmailLembretes />
                     </PrivateRoute>
                   } />
