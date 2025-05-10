@@ -1,53 +1,37 @@
 
-import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
-import { Spinner } from "@/components/ui/spinner";
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 
 interface PrivateRouteProps {
   children: React.ReactNode;
-  requiredRole?: "admin" | "gerente" | "atendente";
+  requiredRole?: 'admin' | 'gerente';
 }
 
 export const PrivateRoute = ({ children, requiredRole }: PrivateRouteProps) => {
-  const { isAuthenticated, user, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user, isAdmin, isGerente } = useAuth();
   const location = useLocation();
 
+  // Se estiver carregando, mostra nada (ou um spinner)
   if (isLoading) {
-    // Mostrar spinner de carregamento
-    return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <Spinner className="h-8 w-8" />
-      </div>
-    );
+    return null;
   }
 
+  // Se não estiver autenticado, redireciona para login
   if (!isAuthenticated) {
-    // Redirecionar para a página de login se não estiver autenticado
-    // Salvar o local atual para redirecionar de volta após o login
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    // Salva o local atual para redirecionar de volta após o login
+    return <Navigate to="/login" state={{ from: location }} />;
   }
 
-  // Verificar se o usuário tem a função requerida
-  if (requiredRole && user?.perfil) {
-    // Para admin, pode acessar qualquer coisa
-    if (user.perfil === "admin") {
-      return <>{children}</>;
+  // Verificação de perfil, se necessário
+  if (requiredRole) {
+    if (requiredRole === 'admin' && !isAdmin) {
+      return <Navigate to="/" />;
     }
-    
-    // Para gerente, pode acessar páginas de gerente e atendente
-    if (user.perfil === "gerente" && (requiredRole === "gerente" || requiredRole === "atendente")) {
-      return <>{children}</>;
+    if (requiredRole === 'gerente' && !isGerente) {
+      return <Navigate to="/" />;
     }
-    
-    // Para atendente, só pode acessar páginas de atendente
-    if (user.perfil === "atendente" && requiredRole === "atendente") {
-      return <>{children}</>;
-    }
-    
-    // Se não tem permissão, redirecione para o Dashboard
-    return <Navigate to="/" replace />;
   }
 
-  // Renderizar o componente protegido
+  // Se passou pelas verificações, renderiza o conteúdo protegido
   return <>{children}</>;
 };

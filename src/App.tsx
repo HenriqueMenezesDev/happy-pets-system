@@ -19,6 +19,7 @@ import Servicos from "./pages/Servicos";
 import Produtos from "./pages/Produtos";
 import Atendimentos from "./pages/Atendimentos";
 import Login from "./pages/Login";
+import Setup from "./pages/Setup";
 import Agendamento from "./pages/Agendamento";
 import AgendamentoOnline from "./pages/AgendamentoOnline";
 import HorariosDisponiveis from "./pages/admin/HorariosDisponiveis";
@@ -37,6 +38,9 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              {/* Rota de configuração inicial */}
+              <Route path="/setup" element={<Setup />} />
+              
               {/* Rotas públicas */}
               <Route path="/login" element={
                 <PublicOnlyRoute>

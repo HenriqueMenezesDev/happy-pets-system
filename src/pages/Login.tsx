@@ -1,11 +1,12 @@
 
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Card,
   CardContent,
@@ -29,9 +30,35 @@ const Login = () => {
   const location = useLocation();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [needsSetup, setNeedsSetup] = useState(false);
+  const [checkingSetup, setCheckingSetup] = useState(true);
   
   // Obter a página de redirecionamento após o login, se existir
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/';
+
+  useEffect(() => {
+    const checkIfSetupNeeded = async () => {
+      try {
+        setCheckingSetup(true);
+        const { count, error } = await supabase
+          .from('funcionarios')
+          .select('*', { count: 'exact', head: true });
+        
+        if (error) {
+          console.error('Erro ao verificar funcionários:', error);
+          return;
+        }
+        
+        setNeedsSetup(!count || count === 0);
+      } catch (err) {
+        console.error('Erro ao verificar se precisa de setup:', err);
+      } finally {
+        setCheckingSetup(false);
+      }
+    };
+    
+    checkIfSetupNeeded();
+  }, []);
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
     defaultValues: {
@@ -46,6 +73,13 @@ const Login = () => {
       navigate('/');
     }
   }, [isAuthenticated, navigate]);
+
+  // Redirecionar para setup se não houver funcionários
+  useEffect(() => {
+    if (needsSetup && !checkingSetup) {
+      navigate('/setup');
+    }
+  }, [needsSetup, checkingSetup, navigate]);
 
   const onSubmit = async (data: FormValues) => {
     setError(null);
@@ -73,6 +107,14 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+
+  if (checkingSetup) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-100">
+        <Spinner className="h-8 w-8" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100 px-4 py-12">
@@ -110,47 +152,59 @@ const Login = () => {
             </Alert>
           )}
           
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="seu.email@exemplo.com"
-                  {...register("email", { 
-                    required: "Email é obrigatório",
-                    pattern: {
-                      value: /^\S+@\S+$/i,
-                      message: "Email inválido"
-                    }
-                  })}
-                />
-                {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
-              </div>
-              
-              <div className="grid gap-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="senha">Senha</Label>
-                </div>
-                <Input
-                  id="senha"
-                  type="password"
-                  {...register("senha", { required: "Senha é obrigatória" })}
-                />
-                {errors.senha && <p className="text-sm text-red-500">{errors.senha.message}</p>}
-              </div>
-              
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <span className="flex items-center">
-                    <Spinner className="mr-2 h-4 w-4" />
-                    Entrando...
-                  </span>
-                ) : "Entrar"}
+          {needsSetup ? (
+            <div className="text-center py-4">
+              <p className="mb-4">Não há funcionários cadastrados no sistema.</p>
+              <Button 
+                onClick={() => navigate('/setup')}
+                className="w-full"
+              >
+                Configuração Inicial
               </Button>
             </div>
-          </form>
+          ) : (
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="seu.email@exemplo.com"
+                    {...register("email", { 
+                      required: "Email é obrigatório",
+                      pattern: {
+                        value: /^\S+@\S+$/i,
+                        message: "Email inválido"
+                      }
+                    })}
+                  />
+                  {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
+                </div>
+                
+                <div className="grid gap-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="senha">Senha</Label>
+                  </div>
+                  <Input
+                    id="senha"
+                    type="password"
+                    {...register("senha", { required: "Senha é obrigatória" })}
+                  />
+                  {errors.senha && <p className="text-sm text-red-500">{errors.senha.message}</p>}
+                </div>
+                
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? (
+                    <span className="flex items-center">
+                      <Spinner className="mr-2 h-4 w-4" />
+                      Entrando...
+                    </span>
+                  ) : "Entrar"}
+                </Button>
+              </div>
+            </form>
+          )}
         </CardContent>
         <CardFooter className="flex flex-col">
           <p className="mt-2 text-center text-sm text-gray-600">
