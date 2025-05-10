@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -71,12 +70,11 @@ const Register = () => {
       const novoFuncionario = await addFuncionario({
         nome: data.nome,
         email: data.email,
-        email_login: data.email,
+        emailLogin: data.email,  // Changed from email_login to emailLogin
         senha_hash: data.senha, // Em produção, isso deveria ser criptografado
         cargo: data.cargo,
         perfil: data.perfil,
-        telefone: data.telefone || 'Não informado',
-        ativo: true
+        telefone: data.telefone || 'Não informado'
       });
 
       if (novoFuncionario) {

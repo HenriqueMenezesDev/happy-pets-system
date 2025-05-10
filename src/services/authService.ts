@@ -76,7 +76,8 @@ export function getCurrentUser(): Funcionario | null {
     const storedUser = localStorage.getItem('authUser');
     if (!storedUser) return null;
     
-    return JSON.parse(storedUser);
+    const userData = JSON.parse(storedUser);
+    return mapDbFuncionarioToFuncionario(userData);
   } catch (error) {
     console.error("Erro ao recuperar usuário atual:", error);
     return null;

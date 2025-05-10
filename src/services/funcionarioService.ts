@@ -22,11 +22,23 @@ export async function fetchFuncionarios() {
 
 export async function addFuncionario(funcionario: Omit<Funcionario, 'id' | 'dataCadastro'>) {
   try {
+    // Create the payload that matches the database schema
+    const dbFuncionario = {
+      nome: funcionario.nome,
+      email: funcionario.email,
+      email_login: funcionario.emailLogin,
+      senha_hash: funcionario.senha_hash, // In production, this should be encrypted
+      cargo: funcionario.cargo,
+      perfil: funcionario.perfil,
+      telefone: funcionario.telefone || 'Não informado',
+      ativo: true
+    };
+
     // Verificar se já existe um funcionário com o mesmo email
     const { data: existingUser, error: checkError } = await supabase
       .from('funcionarios')
       .select('id')
-      .eq('email_login', funcionario.email_login)
+      .eq('email_login', funcionario.emailLogin)
       .maybeSingle();
 
     if (checkError) throw checkError;
@@ -41,7 +53,7 @@ export async function addFuncionario(funcionario: Omit<Funcionario, 'id' | 'data
 
     const { data, error } = await supabase
       .from('funcionarios')
-      .insert(funcionario)
+      .insert(dbFuncionario)
       .select('*')
       .single();
 
@@ -61,12 +73,21 @@ export async function addFuncionario(funcionario: Omit<Funcionario, 'id' | 'data
 
 export async function updateFuncionario(id: string, funcionario: Partial<Funcionario>) {
   try {
+    // Create a database-compatible object
+    const dbFuncionario: any = { ...funcionario };
+    
+    // Map emailLogin to email_login if it exists
+    if (funcionario.emailLogin) {
+      dbFuncionario.email_login = funcionario.emailLogin;
+      delete dbFuncionario.emailLogin;
+    }
+
     // Se estiver atualizando o email, verificar se já existe outro funcionário com este email
-    if (funcionario.email_login) {
+    if (funcionario.emailLogin) {
       const { data: existingUser, error: checkError } = await supabase
         .from('funcionarios')
         .select('id')
-        .eq('email_login', funcionario.email_login)
+        .eq('email_login', funcionario.emailLogin)
         .neq('id', id)
         .maybeSingle();
 
@@ -83,7 +104,7 @@ export async function updateFuncionario(id: string, funcionario: Partial<Funcion
 
     const { data, error } = await supabase
       .from('funcionarios')
-      .update(funcionario)
+      .update(dbFuncionario)
       .eq('id', id)
       .select('*')
       .single();
