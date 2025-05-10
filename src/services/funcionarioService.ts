@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Funcionario } from '@/types';
 import { mapDbFuncionarioToFuncionario } from './types/mappers';

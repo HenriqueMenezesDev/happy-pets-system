@@ -17,7 +17,7 @@ export interface AuthState {
 }
 
 // Login do funcionário
-export async function loginFuncionario(credentials: AuthCredentials) {
+export async function loginFuncionario(credentials: AuthCredentials): Promise<Funcionario | null> {
   try {
     // Buscar o funcionário pelo email
     const { data, error } = await supabase
