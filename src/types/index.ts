@@ -1,3 +1,4 @@
+
 // Interfaces para os modelos de dados
 
 export interface Cliente {
