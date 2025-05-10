@@ -32,7 +32,7 @@ export interface Funcionario {
   emailLogin: string; // Campo para autenticação
   perfil: string; // Perfil de acesso: admin, atendente, etc.
   senha?: string; // Campo para cadastro e atualização de senha
-  ativo?: boolean; // Status do funcionário
+  ativo: boolean; // Status do funcionário
 }
 
 export interface Servico {
