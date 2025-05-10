@@ -85,7 +85,7 @@ export function getCurrentUser(): Funcionario | null {
 }
 
 // Logout do funcionário
-export function logoutFuncionario() {
+export function logoutFuncionario(): boolean {
   localStorage.removeItem('authUser');
   toast({
     title: 'Logout realizado com sucesso!',
@@ -109,7 +109,7 @@ export function hasRole(user: Funcionario | null, role: string): boolean {
 }
 
 // Atualizar a senha do funcionário
-export async function atualizarSenha(funcionarioId: string, novaSenha: string) {
+export async function atualizarSenha(funcionarioId: string, novaSenha: string): Promise<boolean> {
   try {
     const { data, error } = await supabase
       .from('funcionarios')

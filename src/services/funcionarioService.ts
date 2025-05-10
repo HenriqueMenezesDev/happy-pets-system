@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Funcionario } from '@/types';
 import { mapDbFuncionarioToFuncionario } from './types/mappers';
@@ -72,7 +73,7 @@ export async function addFuncionario(funcionario: Omit<Funcionario, 'id' | 'data
 
 export async function updateFuncionario(id: string, funcionario: Partial<Funcionario>) {
   try {
-    // Create a database-compatible object
+    // Create a database-compatible object using a more flexible type
     const dbFuncionario: Record<string, any> = {};
     
     // Map fields from Funcionario model to database fields
