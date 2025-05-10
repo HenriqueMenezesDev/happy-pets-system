@@ -1,4 +1,3 @@
-
 import { Cliente, Pet, Funcionario, Servico, Produto, Atendimento, ItemAtendimento, HorarioDisponivel, Agendamento, LembreteEmail } from '@/types';
 
 export const mapDbClienteToCliente = (dbCliente: any): Cliente => {
@@ -36,7 +35,9 @@ export const mapDbFuncionarioToFuncionario = (dbFuncionario: any): Funcionario =
     telefone: dbFuncionario.telefone,
     dataCadastro: dbFuncionario.data_cadastro,
     emailLogin: dbFuncionario.email_login,
-    perfil: dbFuncionario.perfil
+    perfil: dbFuncionario.perfil,
+    senha: dbFuncionario.senha_hash,
+    ativo: dbFuncionario.ativo
   };
 };
 

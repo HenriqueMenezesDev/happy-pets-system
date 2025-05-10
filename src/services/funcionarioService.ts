@@ -27,11 +27,11 @@ export async function addFuncionario(funcionario: Omit<Funcionario, 'id' | 'data
       nome: funcionario.nome,
       email: funcionario.email,
       email_login: funcionario.emailLogin,
-      senha_hash: funcionario.senha_hash, // In production, this should be encrypted
+      senha_hash: funcionario.senha, // In production, this should be encrypted
       cargo: funcionario.cargo,
       perfil: funcionario.perfil,
       telefone: funcionario.telefone || 'Não informado',
-      ativo: true
+      ativo: funcionario.ativo || true
     };
 
     // Verificar se já existe um funcionário com o mesmo email
@@ -74,14 +74,18 @@ export async function addFuncionario(funcionario: Omit<Funcionario, 'id' | 'data
 export async function updateFuncionario(id: string, funcionario: Partial<Funcionario>) {
   try {
     // Create a database-compatible object
-    const dbFuncionario: any = { ...funcionario };
+    const dbFuncionario: any = {};
     
-    // Map emailLogin to email_login if it exists
-    if (funcionario.emailLogin) {
-      dbFuncionario.email_login = funcionario.emailLogin;
-      delete dbFuncionario.emailLogin;
-    }
-
+    // Map fields from Funcionario model to database fields
+    if (funcionario.nome) dbFuncionario.nome = funcionario.nome;
+    if (funcionario.email) dbFuncionario.email = funcionario.email;
+    if (funcionario.emailLogin) dbFuncionario.email_login = funcionario.emailLogin;
+    if (funcionario.cargo) dbFuncionario.cargo = funcionario.cargo;
+    if (funcionario.perfil) dbFuncionario.perfil = funcionario.perfil;
+    if (funcionario.telefone) dbFuncionario.telefone = funcionario.telefone;
+    if (funcionario.senha) dbFuncionario.senha_hash = funcionario.senha;
+    if (funcionario.ativo !== undefined) dbFuncionario.ativo = funcionario.ativo;
+    
     // Se estiver atualizando o email, verificar se já existe outro funcionário com este email
     if (funcionario.emailLogin) {
       const { data: existingUser, error: checkError } = await supabase

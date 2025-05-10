@@ -1,4 +1,3 @@
-
 // Interfaces para os modelos de dados
 
 export interface Cliente {
@@ -30,8 +29,10 @@ export interface Funcionario {
   email: string;
   telefone: string;
   dataCadastro: string;
-  emailLogin?: string; // Campo para autenticação
-  perfil?: string; // Perfil de acesso: admin, atendente, etc.
+  emailLogin: string; // Campo para autenticação
+  perfil: string; // Perfil de acesso: admin, atendente, etc.
+  senha?: string; // Campo para cadastro e atualização de senha
+  ativo?: boolean; // Status do funcionário
 }
 
 export interface Servico {
