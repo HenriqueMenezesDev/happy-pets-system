@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useData } from '@/context/DataContext';
 import { Funcionario } from '@/types';
@@ -23,6 +24,8 @@ interface FormValues {
   cargo: string;
   email: string;
   telefone: string;
+  emailLogin: string;
+  perfil: string;
 }
 
 const Funcionarios = () => {
@@ -51,6 +54,8 @@ const Funcionarios = () => {
       cargo: '',
       email: '',
       telefone: '',
+      emailLogin: '', // Initialize the new required field
+      perfil: 'funcionario', // Set a default value for perfil
     });
     setIsFormOpen(true);
   };
@@ -62,6 +67,8 @@ const Funcionarios = () => {
       cargo: funcionario.cargo,
       email: funcionario.email,
       telefone: funcionario.telefone,
+      emailLogin: funcionario.emailLogin, // Add the emailLogin field
+      perfil: funcionario.perfil, // Add the perfil field
     });
     setIsFormOpen(true);
   };
@@ -82,6 +89,16 @@ const Funcionarios = () => {
     if (currentFuncionario) {
       atualizarFuncionario(currentFuncionario.id, data);
     } else {
+      // Set emailLogin to email if not provided
+      if (!data.emailLogin) {
+        data.emailLogin = data.email;
+      }
+      
+      // Set a default perfil if not provided
+      if (!data.perfil) {
+        data.perfil = 'funcionario';
+      }
+      
       adicionarFuncionario(data);
     }
     setIsFormOpen(false);
@@ -168,6 +185,9 @@ const Funcionarios = () => {
                 />
                 {errors.telefone && <p className="text-red-500 text-sm">{errors.telefone.message}</p>}
               </div>
+
+              <input type="hidden" {...register("emailLogin")} />
+              <input type="hidden" {...register("perfil")} value="funcionario" />
             </div>
 
             <DialogFooter>

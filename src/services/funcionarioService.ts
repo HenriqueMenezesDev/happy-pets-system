@@ -31,7 +31,7 @@ export async function addFuncionario(funcionario: Omit<Funcionario, 'id' | 'data
       cargo: funcionario.cargo,
       perfil: funcionario.perfil,
       telefone: funcionario.telefone || 'Não informado',
-      ativo: funcionario.ativo || true
+      ativo: funcionario.ativo !== undefined ? funcionario.ativo : true
     };
 
     // Verificar se já existe um funcionário com o mesmo email
