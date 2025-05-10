@@ -31,7 +31,7 @@ export async function addFuncionario(funcionario: Omit<Funcionario, 'id' | 'data
       cargo: funcionario.cargo,
       perfil: funcionario.perfil,
       telefone: funcionario.telefone || 'Não informado',
-      ativo: funcionario.ativo !== undefined ? funcionario.ativo : true
+      ativo: funcionario.ativo // Add ativo field to the database record
     };
 
     // Verificar se já existe um funcionário com o mesmo email
@@ -73,7 +73,7 @@ export async function addFuncionario(funcionario: Omit<Funcionario, 'id' | 'data
 
 export async function updateFuncionario(id: string, funcionario: Partial<Funcionario>) {
   try {
-    // Create a database-compatible object using type assertion
+    // Create a database-compatible object using a simple record type
     const dbFuncionario: Record<string, any> = {};
     
     // Map fields from Funcionario model to database fields

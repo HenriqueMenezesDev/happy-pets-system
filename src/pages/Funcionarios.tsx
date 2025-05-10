@@ -18,6 +18,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useForm } from 'react-hook-form';
 import { Users } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Form, FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
 
 interface FormValues {
   nome: string;
@@ -26,6 +28,7 @@ interface FormValues {
   telefone: string;
   emailLogin: string;
   perfil: string;
+  ativo: boolean; // Added the missing ativo property
 }
 
 const Funcionarios = () => {
@@ -45,6 +48,10 @@ const Funcionarios = () => {
       header: 'Data de Cadastro', 
       accessor: (funcionario: Funcionario) => new Date(funcionario.dataCadastro).toLocaleDateString() 
     },
+    {
+      header: 'Status',
+      accessor: (funcionario: Funcionario) => funcionario.ativo ? 'Ativo' : 'Inativo'
+    },
   ];
 
   const handleAddNew = () => {
@@ -54,8 +61,9 @@ const Funcionarios = () => {
       cargo: '',
       email: '',
       telefone: '',
-      emailLogin: '', // Initialize the new required field
-      perfil: 'funcionario', // Set a default value for perfil
+      emailLogin: '',
+      perfil: 'funcionario',
+      ativo: true, // Default value for new employees
     });
     setIsFormOpen(true);
   };
@@ -67,8 +75,9 @@ const Funcionarios = () => {
       cargo: funcionario.cargo,
       email: funcionario.email,
       telefone: funcionario.telefone,
-      emailLogin: funcionario.emailLogin, // Add the emailLogin field
-      perfil: funcionario.perfil, // Add the perfil field
+      emailLogin: funcionario.emailLogin,
+      perfil: funcionario.perfil,
+      ativo: funcionario.ativo,
     });
     setIsFormOpen(true);
   };
@@ -184,6 +193,19 @@ const Funcionarios = () => {
                   {...register("telefone", { required: "Telefone é obrigatório" })}
                 />
                 {errors.telefone && <p className="text-red-500 text-sm">{errors.telefone.message}</p>}
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Status</Label>
+                <div className="flex items-center space-x-2">
+                  <Switch 
+                    {...register("ativo")} 
+                    defaultChecked={currentFuncionario ? currentFuncionario.ativo : true}
+                  />
+                  <Label htmlFor="ativo">
+                    {currentFuncionario && currentFuncionario.ativo ? 'Ativo' : 'Inativo'}
+                  </Label>
+                </div>
               </div>
 
               <input type="hidden" {...register("emailLogin")} />
