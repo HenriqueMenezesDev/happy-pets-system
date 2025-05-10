@@ -19,9 +19,9 @@ import Servicos from "./pages/Servicos";
 import Produtos from "./pages/Produtos";
 import Atendimentos from "./pages/Atendimentos";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Setup from "./pages/Setup";
 import Agendamento from "./pages/Agendamento";
-import AgendamentoOnline from "./pages/AgendamentoOnline";
 import HorariosDisponiveis from "./pages/admin/HorariosDisponiveis";
 import AdminAgendamentos from "./pages/admin/Agendamentos";
 import EmailLembretes from "./pages/admin/EmailLembretes";
@@ -47,7 +47,11 @@ const App = () => (
                   <Login />
                 </PublicOnlyRoute>
               } />
-              <Route path="/agendamento-online" element={<AgendamentoOnline />} />
+              <Route path="/register" element={
+                <PublicOnlyRoute>
+                  <Register />
+                </PublicOnlyRoute>
+              } />
 
               {/* Redirecionar para login se não estiver autenticado */}
               <Route path="/" element={

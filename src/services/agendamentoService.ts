@@ -12,8 +12,8 @@ export async function fetchAgendamentos() {
       .from('agendamentos')
       .select(`
         *,
-        clientes(nome),
-        pets(nome),
+        clientes(nome, email, telefone),
+        pets(nome, especie, raca),
         funcionarios(nome),
         servicos(nome, duracao, preco)
       `)
@@ -28,6 +28,31 @@ export async function fetchAgendamentos() {
   }
 }
 
+// Buscar agendamentos por período
+export async function fetchAgendamentosPorPeriodo(dataInicio: string, dataFim: string) {
+  try {
+    const { data, error } = await supabase
+      .from('agendamentos')
+      .select(`
+        *,
+        clientes(nome, email, telefone),
+        pets(nome, especie, raca),
+        funcionarios(nome),
+        servicos(nome, duracao, preco)
+      `)
+      .gte('data', dataInicio)
+      .lte('data', dataFim)
+      .order('data', { ascending: true })
+      .order('hora', { ascending: true });
+
+    if (error) throw error;
+    return data.map(mapDbAgendamentoToAgendamento);
+  } catch (error: any) {
+    handleError(error, 'buscar agendamentos por período');
+    return [];
+  }
+}
+
 // Buscar agendamentos do cliente
 export async function fetchAgendamentosCliente(clienteId: string) {
   try {
@@ -35,8 +60,8 @@ export async function fetchAgendamentosCliente(clienteId: string) {
       .from('agendamentos')
       .select(`
         *,
-        clientes(nome),
-        pets(nome),
+        clientes(nome, email, telefone),
+        pets(nome, especie, raca),
         funcionarios(nome),
         servicos(nome, duracao, preco)
       `)
@@ -48,6 +73,30 @@ export async function fetchAgendamentosCliente(clienteId: string) {
     return data.map(mapDbAgendamentoToAgendamento);
   } catch (error: any) {
     handleError(error, 'buscar agendamentos do cliente');
+    return [];
+  }
+}
+
+// Buscar agendamentos do funcionário
+export async function fetchAgendamentosFuncionario(funcionarioId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('agendamentos')
+      .select(`
+        *,
+        clientes(nome, email, telefone),
+        pets(nome, especie, raca),
+        funcionarios(nome),
+        servicos(nome, duracao, preco)
+      `)
+      .eq('funcionario_id', funcionarioId)
+      .order('data', { ascending: true })
+      .order('hora', { ascending: true });
+
+    if (error) throw error;
+    return data.map(mapDbAgendamentoToAgendamento);
+  } catch (error: any) {
+    handleError(error, 'buscar agendamentos do funcionário');
     return [];
   }
 }
@@ -72,8 +121,8 @@ export async function addAgendamento(agendamento: Omit<Agendamento, 'id' | 'valo
       .insert(dbAgendamento)
       .select(`
         *,
-        clientes(nome),
-        pets(nome),
+        clientes(nome, email, telefone),
+        pets(nome, especie, raca),
         funcionarios(nome),
         servicos(nome, duracao, preco)
       `)
@@ -111,15 +160,18 @@ export async function updateAgendamento(id: string, agendamento: Partial<Agendam
       .eq('id', id)
       .select(`
         *,
-        clientes(nome),
-        pets(nome),
+        clientes(nome, email, telefone),
+        pets(nome, especie, raca),
         funcionarios(nome),
         servicos(nome, duracao, preco)
       `)
       .single();
 
     if (error) throw error;
-    toast({ title: "Agendamento atualizado com sucesso!" });
+    toast({ 
+      title: "Agendamento atualizado com sucesso!",
+      description: "As informações do agendamento foram atualizadas."
+    });
     return mapDbAgendamentoToAgendamento(data);
   } catch (error: any) {
     handleError(error, 'atualizar agendamento');
@@ -136,7 +188,10 @@ export async function deleteAgendamento(id: string) {
       .eq('id', id);
 
     if (error) throw error;
-    toast({ title: "Agendamento cancelado com sucesso!" });
+    toast({ 
+      title: "Agendamento cancelado com sucesso!",
+      description: "O agendamento foi removido do sistema."
+    });
     return true;
   } catch (error: any) {
     handleError(error, 'cancelar agendamento');

@@ -1,5 +1,7 @@
+
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { Spinner } from '@/components/ui/spinner';
 
 interface PublicOnlyRouteProps {
   children: React.ReactNode;
@@ -12,16 +14,20 @@ export const PublicOnlyRoute = ({
 }: PublicOnlyRouteProps) => {
   const { isAuthenticated, isLoading } = useAuth();
 
-  // If authentication is loading, show nothing or a loading indicator
+  // Se estiver carregando, mostra um spinner
   if (isLoading) {
-    return null; // You could replace this with a loading spinner
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Spinner className="h-8 w-8" />
+      </div>
+    );
   }
 
-  // If user is authenticated, redirect to specified path
+  // Se usuário está autenticado, redireciona para o caminho especificado
   if (isAuthenticated) {
     return <Navigate to={redirectPath} />;
   }
 
-  // Otherwise, render children
+  // Se não estiver autenticado, renderiza os filhos (página pública)
   return <>{children}</>;
 };

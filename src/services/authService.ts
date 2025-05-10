@@ -24,10 +24,16 @@ export async function loginFuncionario(credentials: AuthCredentials) {
       .from('funcionarios')
       .select('*')
       .eq('email_login', credentials.email)
-      .maybeSingle(); // Use maybeSingle instead of single to avoid the error
+      .eq('ativo', true)  // Verifica se o funcionário está ativo
+      .maybeSingle(); // Usa maybeSingle em vez de single para evitar erro
 
-    if (error) throw error;
+    if (error) {
+      console.error("Erro na consulta:", error);
+      throw error;
+    }
+    
     if (!data) {
+      console.log("Funcionário não encontrado ou inativo");
       toast({
         title: 'Erro de autenticação',
         description: 'Email ou senha inválidos',
@@ -36,10 +42,9 @@ export async function loginFuncionario(credentials: AuthCredentials) {
       return null;
     }
 
-    // IMPORTANTE: Em um ambiente de produção real, usaríamos bcrypt para verificar a senha
-    // Este é apenas um exemplo simplificado para demonstração
-    // Em um sistema real, usaríamos autenticação do Supabase ou outra solução segura
+    // Verificação da senha
     if (data.senha_hash !== credentials.senha) {
+      console.log("Senha incorreta");
       toast({
         title: 'Erro de autenticação',
         description: 'Email ou senha inválidos',
@@ -48,8 +53,9 @@ export async function loginFuncionario(credentials: AuthCredentials) {
       return null;
     }
 
-    // Armazenar o funcionário no localStorage (em produção, use cookies ou JWT)
+    // Armazenar o funcionário no localStorage
     localStorage.setItem('authUser', JSON.stringify(data));
+    console.log("Funcionário autenticado:", data.nome);
     
     toast({
       title: 'Login realizado com sucesso!',
@@ -58,6 +64,7 @@ export async function loginFuncionario(credentials: AuthCredentials) {
 
     return mapDbFuncionarioToFuncionario(data);
   } catch (error: any) {
+    console.error("Erro no processo de login:", error);
     handleError(error, 'fazer login');
     return null;
   }
@@ -71,6 +78,7 @@ export function getCurrentUser(): Funcionario | null {
     
     return JSON.parse(storedUser);
   } catch (error) {
+    console.error("Erro ao recuperar usuário atual:", error);
     return null;
   }
 }
@@ -87,7 +95,16 @@ export function logoutFuncionario() {
 // Verificar se o usuário tem um determinado perfil
 export function hasRole(user: Funcionario | null, role: string): boolean {
   if (!user) return false;
-  return user.perfil === role;
+  
+  if (role === 'admin') {
+    return user.perfil === 'admin';
+  }
+  
+  if (role === 'gerente') {
+    return user.perfil === 'gerente' || user.perfil === 'admin';
+  }
+  
+  return true; // Qualquer usuário autenticado tem acesso a funções básicas
 }
 
 // Atualizar a senha do funcionário

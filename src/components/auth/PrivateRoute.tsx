@@ -1,6 +1,7 @@
 
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { Spinner } from '@/components/ui/spinner';
 
 interface PrivateRouteProps {
   children: React.ReactNode;
@@ -11,9 +12,13 @@ export const PrivateRoute = ({ children, requiredRole }: PrivateRouteProps) => {
   const { isAuthenticated, isLoading, user, isAdmin, isGerente } = useAuth();
   const location = useLocation();
 
-  // Se estiver carregando, mostra nada (ou um spinner)
+  // Se estiver carregando, mostra um spinner
   if (isLoading) {
-    return null;
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Spinner className="h-8 w-8" />
+      </div>
+    );
   }
 
   // Se não estiver autenticado, redireciona para login

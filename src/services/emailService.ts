@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { handleError } from './utils/errorHandler';
 import { LembreteEmail } from '@/types';
 import { mapDbLembreteEmailToLembreteEmail } from './types/mappers';
+import { toast } from '@/hooks/use-toast';
 
 // Buscar lembretes de email pendentes
 export async function fetchLembretesEmailPendentes() {
@@ -47,6 +48,10 @@ export async function marcarLembreteEnviado(id: string) {
       .single();
 
     if (error) throw error;
+    toast({ 
+      title: "Email marcado como enviado",
+      description: "O lembrete foi marcado como enviado com sucesso."
+    });
     return mapDbLembreteEmailToLembreteEmail(data);
   } catch (error: any) {
     handleError(error, 'marcar lembrete como enviado');
@@ -67,6 +72,11 @@ export async function enviarLembreteEmail(lembrete: LembreteEmail) {
       Assunto: ${lembrete.tipo === 'confirmacao' ? 'Confirmação de Agendamento' : 'Lembrete de Consulta'}
       Mensagem: ${getEmailMessage(lembrete)}
     `);
+
+    toast({
+      title: `Email ${lembrete.tipo === 'confirmacao' ? 'de confirmação' : 'de lembrete'} enviado`,
+      description: `Email enviado para ${lembrete.agendamento.cliente.email}`
+    });
 
     // Marcar como enviado no banco de dados
     return await marcarLembreteEnviado(lembrete.id);
@@ -112,7 +122,7 @@ function getEmailMessage(lembrete: LembreteEmail): string {
   }
 }
 
-// Processar lembretes pendentes (em um ambiente real, isso seria feito por um cron job)
+// Processar lembretes pendentes
 export async function processarLembretesPendentes() {
   try {
     const lembretes = await fetchLembretesEmailPendentes();
@@ -141,6 +151,13 @@ export async function processarLembretesPendentes() {
           enviados++;
         }
       }
+    }
+    
+    if (enviados > 0) {
+      toast({
+        title: "Processamento de lembretes concluído",
+        description: `${enviados} lembretes foram processados e enviados.`
+      });
     }
     
     return enviados;

@@ -28,6 +28,28 @@ export async function fetchHorariosDisponiveis(data: string, funcionarioId?: str
   }
 }
 
+// Buscar todos os horários (disponíveis e não disponíveis)
+export async function fetchTodosHorarios(data: string, funcionarioId?: string) {
+  try {
+    let query = supabase
+      .from('horarios_disponiveis')
+      .select('*, funcionarios(nome)')
+      .eq('data', data);
+    
+    if (funcionarioId) {
+      query = query.eq('funcionario_id', funcionarioId);
+    }
+    
+    const { data: horarios, error } = await query.order('hora');
+
+    if (error) throw error;
+    return horarios.map(mapDbHorarioDisponivelToHorarioDisponivel);
+  } catch (error: any) {
+    handleError(error, 'buscar todos os horários');
+    return [];
+  }
+}
+
 // Adicionar um novo horário disponível
 export async function addHorarioDisponivel(horario: Omit<HorarioDisponivel, 'id' | 'funcionarioNome'>) {
   try {
@@ -46,6 +68,11 @@ export async function addHorarioDisponivel(horario: Omit<HorarioDisponivel, 'id'
       .single();
 
     if (error) throw error;
+    toast({
+      title: "Horário adicionado",
+      description: `Horário das ${horario.hora} adicionado com sucesso`
+    });
+    
     return mapDbHorarioDisponivelToHorarioDisponivel(data);
   } catch (error: any) {
     handleError(error, 'adicionar horário disponível');
@@ -96,9 +123,37 @@ export async function marcarHorarioIndisponivel(id: string) {
       .single();
 
     if (error) throw error;
+    toast({
+      title: "Horário bloqueado",
+      description: "O horário foi marcado como indisponível"
+    });
+    
     return mapDbHorarioDisponivelToHorarioDisponivel(data);
   } catch (error: any) {
     handleError(error, 'marcar horário como indisponível');
+    return null;
+  }
+}
+
+// Marcar horário como disponível
+export async function marcarHorarioDisponivel(id: string) {
+  try {
+    const { data, error } = await supabase
+      .from('horarios_disponiveis')
+      .update({ disponivel: true })
+      .eq('id', id)
+      .select('*, funcionarios(nome)')
+      .single();
+
+    if (error) throw error;
+    toast({
+      title: "Horário desbloqueado",
+      description: "O horário foi marcado como disponível"
+    });
+    
+    return mapDbHorarioDisponivelToHorarioDisponivel(data);
+  } catch (error: any) {
+    handleError(error, 'marcar horário como disponível');
     return null;
   }
 }

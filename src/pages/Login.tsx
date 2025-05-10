@@ -208,10 +208,10 @@ const Login = () => {
         </CardContent>
         <CardFooter className="flex flex-col">
           <p className="mt-2 text-center text-sm text-gray-600">
-            Este painel é exclusivo para funcionários. Clientes devem usar a área de
-            <Button variant="link" className="px-1 py-0" onClick={() => navigate('/agendamento-online')}>
-              Agendamento Online
-            </Button>
+            Não tem uma conta?{" "}
+            <Link to="/register" className="text-primary hover:underline">
+              Cadastre-se
+            </Link>
           </p>
         </CardFooter>
       </Card>
