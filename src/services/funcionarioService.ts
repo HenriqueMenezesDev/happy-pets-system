@@ -74,7 +74,7 @@ export async function addFuncionario(funcionario: Omit<Funcionario, 'id' | 'data
 export async function updateFuncionario(id: string, funcionario: Partial<Funcionario>) {
   try {
     // Create a database-compatible object
-    const dbFuncionario: any = {};
+    const dbFuncionario: {[key: string]: any} = {};
     
     // Map fields from Funcionario model to database fields
     if (funcionario.nome) dbFuncionario.nome = funcionario.nome;
