@@ -161,7 +161,7 @@ export async function toggleFuncionarioStatus(id: string, ativo: boolean) {
     
     return mapDbFuncionarioToFuncionario(data);
   } catch (error: any) {
-    handleError(error, 'ativar funcionário' : 'desativar funcionário');
+    handleError(error, ativo ? 'ativar funcionário' : 'desativar funcionário');
     return null;
   }
 }
