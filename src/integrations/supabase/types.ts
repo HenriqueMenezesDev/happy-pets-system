@@ -167,6 +167,7 @@ export type Database = {
       }
       funcionarios: {
         Row: {
+          ativo: boolean
           cargo: string
           data_cadastro: string
           email: string
@@ -178,6 +179,7 @@ export type Database = {
           telefone: string
         }
         Insert: {
+          ativo?: boolean
           cargo: string
           data_cadastro?: string
           email: string
@@ -189,6 +191,7 @@ export type Database = {
           telefone: string
         }
         Update: {
+          ativo?: boolean
           cargo?: string
           data_cadastro?: string
           email?: string
